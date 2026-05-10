@@ -23,32 +23,17 @@ export default function ContactPage() {
         </p>
 
         <div
-          className="rounded-xl p-6 space-y-4"
+          className="rounded-xl p-6"
           style={{ background: "#1a0028", border: "1px solid #6b21a833" }}
         >
-          <div>
-            <p className="text-xs opacity-50 tracking-widest mb-1">X（旧Twitter）</p>
-            <a
-              href="https://twitter.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold hover:opacity-80 transition-opacity"
-              style={{ color: "#9333ea" }}
-            >
-              @your_handle
-            </a>
-          </div>
-
-          <div>
-            <p className="text-xs opacity-50 tracking-widest mb-1">メール</p>
-            <a
-              href="mailto:your@email.com"
-              className="font-bold hover:opacity-80 transition-opacity"
-              style={{ color: "#9333ea" }}
-            >
-              your@email.com
-            </a>
-          </div>
+          <p className="text-xs opacity-50 tracking-widest mb-1">メール</p>
+          <a
+            href="mailto:customer@lapisworks.jp"
+            className="font-bold hover:opacity-80 transition-opacity"
+            style={{ color: "#9333ea" }}
+          >
+            customer@lapisworks.jp
+          </a>
         </div>
 
         <p className="text-xs opacity-40">
