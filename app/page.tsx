@@ -6,6 +6,7 @@ const MagicCircle = dynamic(() => import("../components/MagicCircle"), { ssr: fa
 import { getRandomChant, Chant, Difficulty } from "../data/chants";
 import { calcScore, ScoreResult } from "../lib/scoring";
 import { gtagEvent } from "../lib/gtag";
+import AdBanner from "../components/AdBanner";
 
 type Screen = "top" | "permission" | "countdown" | "recording" | "analyzing" | "result" | "error";
 
@@ -257,6 +258,10 @@ function TopScreen({ onStart }: { onStart: () => void }) {
         診断開始
       </button>
       <p className="text-xs opacity-40">マイクへのアクセス許可が必要です</p>
+
+      <div className="w-full max-w-sm mt-4">
+        <AdBanner slot="TOP_SCREEN_SLOT" />
+      </div>
     </div>
   );
 }
@@ -690,6 +695,10 @@ function ResultScreen({
         >
           もう一度詠唱する
         </button>
+      </div>
+
+      <div className="w-full mt-4">
+        <AdBanner slot="RESULT_SCREEN_SLOT" />
       </div>
     </div>
   );
