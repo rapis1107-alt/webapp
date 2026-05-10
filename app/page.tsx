@@ -554,28 +554,41 @@ function ResultScreen({
   const shareText =
     `【詠唱力診断】\n称号：${result.title}\nランク：${result.rank}　スコア：${result.score}点\n${result.comment}\n${siteUrl}\n#詠唱力診断`;
 
-  const handleShare = async () => {
+  // 結果表示と同時にキャンバスを事前描画（ボタン押下時に非同期処理が不要になりポップアップブロックを回避）
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) drawResultCanvas(canvas, result, chant.title);
+  }, []);
+
+  const handleShare = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    await drawResultCanvas(canvas, result, chant.title);
 
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-      const file = new File([blob], "chant-result.png", { type: "image/png" });
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ title: "詠唱力診断", text: shareText, files: [file] });
-          return;
-        } catch { /* キャンセル等 */ }
-      }
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank");
-    });
+    // iOS/Android: Web Share API でネイティブシェートシート（ポップアップ不要）
+    if (typeof navigator.share === "function") {
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const file = new File([blob], "chant-result.png", { type: "image/png" });
+        if (navigator.canShare?.({ files: [file] })) {
+          navigator.share({ title: "詠唱力診断", text: shareText, files: [file] }).catch(() => {});
+        } else {
+          navigator.share({ title: "詠唱力診断", text: shareText }).catch(() => {});
+        }
+      });
+      return;
+    }
+
+    // デスクトップ: 同期的に window.open（ポップアップブロックされない）
+    window.open(
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
+      "_blank",
+    );
   };
 
-  const handleSaveImage = async () => {
+  const handleSaveImage = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    await drawResultCanvas(canvas, result, chant.title);
+    // キャンバスは事前描画済みなので同期的に保存できる
     const a = document.createElement("a");
     a.href = canvas.toDataURL("image/png");
     a.download = "詠唱力診断結果.png";
