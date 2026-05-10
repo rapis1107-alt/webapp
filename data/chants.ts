@@ -60,6 +60,7 @@ export const chants: Chant[] = [
   },
 ];
 
-export function getRandomChant(): Chant {
-  return chants[Math.floor(Math.random() * chants.length)];
+export function getRandomChant(excludeId?: string): Chant {
+  const pool = excludeId ? chants.filter((c) => c.id !== excludeId) : chants;
+  return pool[Math.floor(Math.random() * pool.length)];
 }

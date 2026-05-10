@@ -3,12 +3,31 @@
 import { useRef, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 const MagicCircle = dynamic(() => import("../components/MagicCircle"), { ssr: false });
-import { getRandomChant, Chant } from "../lib/chants";
+import { getRandomChant, Chant, Difficulty } from "../data/chants";
 import { calcScore, ScoreResult } from "../lib/scoring";
 
 type Screen = "top" | "permission" | "countdown" | "recording" | "analyzing" | "result" | "error";
 
 const RECORD_MAX = 10000;
+const SILENCE_THRESHOLD = 0.005;
+
+const DIFFICULTY_LABEL: Record<Difficulty, string> = {
+  easy: "EASY", normal: "NORMAL", hard: "HARD", expert: "EXPERT",
+};
+const DIFFICULTY_COLOR: Record<Difficulty, string> = {
+  easy: "#4ade80", normal: "#6b21a8", hard: "#cc1a1a", expert: "#d4a017",
+};
+
+function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
+  return (
+    <span
+      className="text-xs font-bold tracking-widest px-3 py-1 rounded-full"
+      style={{ border: `1px solid ${DIFFICULTY_COLOR[difficulty]}88`, color: DIFFICULTY_COLOR[difficulty] }}
+    >
+      {DIFFICULTY_LABEL[difficulty]}
+    </span>
+  );
+}
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("top");
@@ -19,12 +38,12 @@ export default function Home() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startTimeRef = useRef<number>(0);
+  const audioCtxRef      = useRef<AudioContext | null>(null);
+  const recordTimerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startTimeRef     = useRef<number>(0);
   const volumeSamplesRef = useRef<number[]>([]);
-  const pitchSamplesRef = useRef<number[]>([]);
+  const pitchSamplesRef  = useRef<number[]>([]);
+  const lastChantIdRef   = useRef<string | undefined>(undefined);
 
   const stopRecording = () => {
     if (recordTimerRef.current) {
@@ -40,17 +59,38 @@ export default function Home() {
     setScreen("analyzing");
 
     setTimeout(() => {
-      const vols = volumeSamplesRef.current;
+      const vols    = volumeSamplesRef.current;
       const pitches = pitchSamplesRef.current;
-      const avgVol = vols.length ? vols.reduce((a, b) => a + b, 0) / vols.length : 0;
-      const maxVol = vols.length ? Math.max(...vols) : 0;
-      const avgPitch = pitches.length ? pitches.reduce((a, b) => a + b, 0) / pitches.length : 0;
 
-      const volume = Math.min(100, Math.round(avgVol * 800 + maxVol * 200));
-      const intonation = Math.min(100, Math.round(avgPitch * 0.8));
-      const clarity = Math.min(100, Math.round((avgVol > 0.005 ? 70 : 30) + Math.random() * 30));
+      const avgVolume  = vols.length ? vols.reduce((a, b) => a + b, 0) / vols.length : 0;
+      const maxVolume  = vols.length ? Math.max(...vols) : 0;
+      const silenceRatio = vols.length
+        ? vols.filter((v) => v < SILENCE_THRESHOLD).length / vols.length
+        : 1;
 
-      const score = calcScore({ volume, intonation, clarity, duration });
+      // 連続する無音区間の数を数える
+      let silenceCount = 0;
+      let inSilence = false;
+      for (const v of vols) {
+        if (v < SILENCE_THRESHOLD) {
+          if (!inSilence) { silenceCount++; inSilence = true; }
+        } else {
+          inSilence = false;
+        }
+      }
+
+      const volumeVariance = vols.length > 1
+        ? Math.sqrt(vols.reduce((s, v) => s + (v - avgVolume) ** 2, 0) / vols.length)
+        : 0;
+
+      void pitches; // pitchSamples は将来の拡張用
+
+      const expectedSeconds = chant?.expectedSeconds ?? 8;
+      const score = calcScore({
+        duration, expectedSeconds,
+        avgVolume, maxVolume,
+        volumeVariance, silenceRatio, silenceCount,
+      });
       setResult(score);
       setScreen("result");
     }, 2200);
@@ -58,7 +98,7 @@ export default function Home() {
 
   const startRecording = async (c: Chant) => {
     volumeSamplesRef.current = [];
-    pitchSamplesRef.current = [];
+    pitchSamplesRef.current  = [];
 
     let stream: MediaStream;
     try {
@@ -72,11 +112,10 @@ export default function Home() {
     try {
       const audioCtx = new AudioContext();
       audioCtxRef.current = audioCtx;
-      const source = audioCtx.createMediaStreamSource(stream);
+      const source  = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 2048;
       source.connect(analyser);
-      analyserRef.current = analyser;
 
       const mr = new MediaRecorder(stream);
       mediaRecorderRef.current = mr;
@@ -88,7 +127,7 @@ export default function Home() {
       setRecordMs(0);
       setScreen("recording");
 
-      const buf = new Float32Array(analyser.fftSize);
+      const buf     = new Float32Array(analyser.fftSize);
       const freqBuf = new Uint8Array(analyser.frequencyBinCount);
 
       recordTimerRef.current = setInterval(() => {
@@ -116,12 +155,11 @@ export default function Home() {
     }
   };
 
-  const handleStart = () => {
-    setScreen("permission");
-  };
+  const handleStart = () => setScreen("permission");
 
   const handlePermissionGranted = () => {
-    const c = getRandomChant();
+    const c = getRandomChant(lastChantIdRef.current);
+    lastChantIdRef.current = c.id;
     setChant(c);
     setCountdown(3);
     setScreen("countdown");
@@ -166,12 +204,16 @@ export default function Home() {
           <RecordingScreen chant={chant} elapsed={recordMs} onStop={stopRecording} />
         )}
         {screen === "analyzing" && <AnalyzingScreen />}
-        {screen === "result" && result && <ResultScreen result={result} onRetry={handleRetry} />}
+        {screen === "result" && result && chant && (
+          <ResultScreen result={result} chant={chant} onRetry={handleRetry} />
+        )}
         {screen === "error" && <ErrorScreen message={errorMsg} onRetry={handleRetry} />}
       </div>
     </main>
   );
 }
+
+// ─── TopScreen ───────────────────────────────────────────────────────────────
 
 function TopScreen({ onStart }: { onStart: () => void }) {
   return (
@@ -204,6 +246,8 @@ function TopScreen({ onStart }: { onStart: () => void }) {
     </div>
   );
 }
+
+// ─── PermissionScreen ─────────────────────────────────────────────────────────
 
 function PermissionScreen({
   onGranted,
@@ -243,7 +287,6 @@ function PermissionScreen({
               詠唱を録音するためにマイクへの<br />アクセスが必要です。
             </p>
           </div>
-
           <div className="w-full rounded-xl p-4 space-y-2 text-left text-xs opacity-60 leading-relaxed"
             style={{ background: "#1a0028", border: "1px solid #6b21a833" }}>
             <p className="font-bold opacity-80">📋 許可の手順</p>
@@ -261,7 +304,6 @@ function PermissionScreen({
               </>
             )}
           </div>
-
           <button
             onClick={requestMic}
             disabled={status === "waiting"}
@@ -278,9 +320,7 @@ function PermissionScreen({
       ) : (
         <>
           <div className="text-5xl">🚫</div>
-          <p className="text-base font-bold" style={{ color: "#cc1a1a" }}>
-            マイクが許可されていません
-          </p>
+          <p className="text-base font-bold" style={{ color: "#cc1a1a" }}>マイクが許可されていません</p>
           <div className="w-full rounded-xl p-4 space-y-2 text-left text-xs leading-relaxed"
             style={{ background: "#1a0028", border: "1px solid #cc1a1a44" }}>
             <p className="font-bold opacity-80">🔧 再度許可する方法</p>
@@ -310,11 +350,16 @@ function PermissionScreen({
   );
 }
 
+// ─── CountdownScreen ──────────────────────────────────────────────────────────
+
 function CountdownScreen({ chant, count }: { chant: Chant; count: number }) {
   return (
     <div className="flex flex-col items-center gap-8 text-center z-10 max-w-sm">
       <p className="text-xs tracking-widest opacity-50">詠唱文を読み上げよ</p>
-      <h2 className="text-xl font-bold" style={{ color: "#d4a017" }}>{chant.title}</h2>
+      <div className="flex flex-col items-center gap-2">
+        <DifficultyBadge difficulty={chant.difficulty} />
+        <h2 className="text-xl font-bold" style={{ color: "#d4a017" }}>{chant.title}</h2>
+      </div>
       <p className="text-sm leading-loose opacity-70 px-4">{chant.text}</p>
       <div
         key={count}
@@ -328,8 +373,10 @@ function CountdownScreen({ chant, count }: { chant: Chant; count: number }) {
   );
 }
 
+// ─── RecordingScreen ──────────────────────────────────────────────────────────
+
 function RecordingScreen({ chant, elapsed, onStop }: { chant: Chant; elapsed: number; onStop: () => void }) {
-  const pct = Math.min(100, (elapsed / RECORD_MAX) * 100);
+  const pct       = Math.min(100, (elapsed / RECORD_MAX) * 100);
   const remaining = Math.max(0, Math.ceil((RECORD_MAX - elapsed) / 1000));
 
   return (
@@ -339,7 +386,10 @@ function RecordingScreen({ chant, elapsed, onStop }: { chant: Chant; elapsed: nu
         <span className="text-xs tracking-widest opacity-70">REC</span>
         <span className="text-xs opacity-50 ml-2">{remaining}秒</span>
       </div>
-      <h2 className="text-lg font-bold" style={{ color: "#d4a017" }}>{chant.title}</h2>
+      <div className="flex flex-col items-center gap-1">
+        <DifficultyBadge difficulty={chant.difficulty} />
+        <h2 className="text-lg font-bold" style={{ color: "#d4a017" }}>{chant.title}</h2>
+      </div>
       <p className="text-base leading-loose opacity-90 px-2">{chant.text}</p>
       <div className="w-full h-2 rounded-full overflow-hidden mt-2" style={{ background: "#2a0020" }}>
         <div
@@ -358,6 +408,8 @@ function RecordingScreen({ chant, elapsed, onStop }: { chant: Chant; elapsed: nu
   );
 }
 
+// ─── AnalyzingScreen ──────────────────────────────────────────────────────────
+
 function AnalyzingScreen() {
   return (
     <div className="flex flex-col items-center gap-6 text-center z-10">
@@ -369,6 +421,8 @@ function AnalyzingScreen() {
     </div>
   );
 }
+
+// ─── ErrorScreen ──────────────────────────────────────────────────────────────
 
 function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
@@ -386,96 +440,179 @@ function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => voi
   );
 }
 
-const SCORE_LABELS: { key: keyof ScoreResult; label: string; color: string }[] = [
-  { key: "volume",     label: "声量",    color: "#6b21a8" },
-  { key: "intonation", label: "抑揚",    color: "#9333ea" },
-  { key: "clarity",   label: "明瞭度",  color: "#7c3aed" },
-  { key: "soul",      label: "魂の奔流", color: "#cc1a1a" },
-  { key: "chuuni",    label: "厨二力",  color: "#d4a017" },
-];
+// ─── FailureDisplay ───────────────────────────────────────────────────────────
 
-function ScoreBar({ label, value, color }: { label: string; value: number; color: string }) {
-  const [width, setWidth] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setWidth(value), 100);
-    return () => clearTimeout(t);
-  }, [value]);
+function FailureDisplay({ rank }: { rank: string }) {
+  const isE = rank === "E";
+  const label = isE ? "魔力反応なし" : "詠唱失敗";
+  const sub   = isE ? "Black flame rejected your soul." : "The spell dissolved into silence.";
 
   return (
-    <div className="flex items-center gap-3 w-full">
-      <span className="text-xs w-16 text-right opacity-70 shrink-0">{label}</span>
-      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "#2a0020" }}>
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${width}%`, background: color, transition: "width 0.8s ease-out" }}
-        />
+    <div className="relative flex flex-col items-center gap-4 py-2">
+      {/* 壊れた魔法陣 */}
+      <div style={{ filter: "grayscale(1)", opacity: 0.25 }}>
+        <MagicCircle size={160} />
       </div>
-      <span className="text-xs w-8 opacity-70 shrink-0">{value}</span>
+
+      {/* ひび割れSVG */}
+      <svg
+        width="160" height="160"
+        viewBox="0 0 160 160"
+        className="absolute top-0 left-1/2"
+        style={{ transform: "translateX(-50%)", animation: "crack-flash 2s ease-in-out infinite" }}
+      >
+        <g stroke="#cc1a1a" strokeWidth="1.5" fill="none" opacity="0.8">
+          <polyline points="80,30 70,60 85,58 68,100" />
+          <polyline points="80,30 95,55 82,60 100,95" />
+          <polyline points="40,70 60,78 50,95" />
+          <polyline points="120,65 105,75 115,92" />
+        </g>
+      </svg>
+
+      {/* 煙エフェクト */}
+      <div
+        className="absolute"
+        style={{
+          bottom: 40,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 60,
+          height: 40,
+          borderRadius: "50%",
+          background: "radial-gradient(ellipse, #44225588 0%, transparent 70%)",
+          animation: "smoke-rise 2.4s ease-out infinite",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* 失敗ラベル */}
+      <div style={{ animation: "stamp-in 0.5s cubic-bezier(.22,.8,.35,1) forwards" }}>
+        <p
+          className="text-xl font-bold tracking-widest"
+          style={{
+            color: "#cc1a1a",
+            textShadow: "0 0 16px #cc1a1a",
+            animation: "shake 0.5s ease-in-out 0.6s 1",
+          }}
+        >
+          {label}
+        </p>
+        <p className="text-xs opacity-30 mt-1">{sub}</p>
+      </div>
     </div>
   );
 }
 
-function ResultScreen({ result, onRetry }: { result: ScoreResult; onRetry: () => void }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+// ─── ScoreBar ─────────────────────────────────────────────────────────────────
+
+function ScoreBar({
+  label, value, color, comment,
+}: {
+  label: string; value: number; color: string; comment?: string | null;
+}) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(value), 120);
+    return () => clearTimeout(t);
+  }, [value]);
+
+  return (
+    <div className="w-full">
+      <div className="flex items-center gap-3">
+        <span className="text-xs w-14 text-right opacity-70 shrink-0">{label}</span>
+        <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "#2a0020" }}>
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${width}%`, background: color, transition: "width 0.8s ease-out" }}
+          />
+        </div>
+        <span className="text-xs w-8 opacity-70 shrink-0 text-left">{value}</span>
+      </div>
+      {comment && (
+        <p className="text-xs opacity-40 mt-0.5 leading-tight text-right pr-10">{comment}</p>
+      )}
+    </div>
+  );
+}
+
+// ─── ResultScreen ─────────────────────────────────────────────────────────────
+
+function ResultScreen({
+  result, chant, onRetry,
+}: {
+  result: ScoreResult; chant: Chant; onRetry: () => void;
+}) {
+  const isFailure = result.rank === "E" || result.rank === "D";
 
   const rankColor =
-    result.rank === "EX" || result.rank === "SS" ? "#d4a017" :
-    result.rank === "S"  || result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
+    result.rank === "EX" ? "#d4a017" :
+    result.rank === "S"  ? "#ff6a00" :
+    result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
 
-  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const shareText = `【詠唱力診断】\n称号：${result.title}\nランク：${result.rank}　総合：${result.total}点\n${result.comment}\n${siteUrl}\n#詠唱力診断`;
-
-  const handleShare = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    await drawResultCanvas(canvas, result);
-
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-      const file = new File([blob], "chant-result.png", { type: "image/png" });
-
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ title: "詠唱力診断", text: shareText, files: [file] });
-          return;
-        } catch { /* キャンセルなど */ }
-      }
-      // フォールバック：テキストのみでX投稿
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank");
-    });
-  };
-
-  const handleSaveImage = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    await drawResultCanvas(canvas, result);
-    const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
-    a.download = "詠唱力診断結果.png";
-    a.click();
+  const handleShare = () => {
+    window.open(
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(result.shareText)}`,
+      "_blank",
+    );
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 text-center z-10 w-full max-w-sm">
-      <canvas ref={canvasRef} width={600} height={520} className="hidden" />
+    <div className="flex flex-col items-center gap-5 text-center z-10 w-full max-w-sm pb-4">
 
-      <div className="text-5xl font-bold count-pop" style={{ color: rankColor, textShadow: `0 0 30px ${rankColor}` }}>
-        {result.rank}
+      {/* 使用した詠唱名 */}
+      <div className="flex flex-col items-center gap-1">
+        <p className="text-xs opacity-40 tracking-widest">使用した詠唱</p>
+        <div className="flex items-center gap-2">
+          <DifficultyBadge difficulty={chant.difficulty} />
+          <p className="text-sm font-bold" style={{ color: "#d4a017" }}>{chant.title}</p>
+        </div>
       </div>
+
+      {/* 失敗演出 or 成功の魔法陣 */}
+      {isFailure ? (
+        <FailureDisplay rank={result.rank} />
+      ) : (
+        <div style={{ filter: `drop-shadow(0 0 24px ${rankColor}cc)` }}>
+          <MagicCircle size={160} color={rankColor} />
+        </div>
+      )}
+
+      {/* ランク + スコア */}
       <div className="space-y-1">
-        <p className="text-base font-bold tracking-widest" style={{ color: "#d4a017" }}>{result.title}</p>
+        <div
+          className="text-5xl font-bold count-pop"
+          style={{ color: rankColor, textShadow: `0 0 30px ${rankColor}` }}
+        >
+          {result.rank}
+        </div>
         <p className="text-2xl font-bold" style={{ color: rankColor }}>
-          {result.total} <span className="text-sm opacity-60">/ 100</span>
+          {result.score} <span className="text-sm opacity-60">/ 100</span>
         </p>
       </div>
-      <p className="text-sm opacity-70 leading-relaxed italic">「{result.comment}」</p>
 
-      <div className="w-full space-y-2 py-2">
-        {SCORE_LABELS.map(({ key, label, color }) => (
-          <ScoreBar key={key} label={label} value={result[key] as number} color={color} />
-        ))}
+      {/* 称号 */}
+      <div>
+        <p className="text-xs opacity-40 tracking-widest mb-1">称号</p>
+        <p className="text-base font-bold tracking-widest" style={{ color: "#d4a017" }}>
+          {result.title}
+        </p>
       </div>
 
+      {/* 結果コメント */}
+      <p className="text-sm opacity-75 leading-relaxed italic px-2">
+        「{result.comment}」
+      </p>
+
+      {/* スコアバー */}
+      <div className="w-full space-y-3 py-1">
+        <ScoreBar label="声量"   value={result.volume}     color="#6b21a8" comment={result.volumeComment} />
+        <ScoreBar label="抑揚"   value={result.intonation} color="#9333ea" comment={result.intonationComment} />
+        <ScoreBar label="滑舌"   value={result.clarity}    color="#7c3aed" comment={result.clarityComment} />
+        <ScoreBar label="魂"     value={result.soul}       color="#cc1a1a" comment={result.soulComment} />
+        <ScoreBar label="厨二力" value={result.chuni}      color="#d4a017" />
+      </div>
+
+      {/* ボタン */}
       <div className="flex flex-col gap-3 w-full mt-2">
         <button
           onClick={handleShare}
@@ -485,15 +622,8 @@ function ResultScreen({ result, onRetry }: { result: ScoreResult; onRetry: () =>
           𝕏 で結果をシェア
         </button>
         <button
-          onClick={handleSaveImage}
-          className="w-full py-3 rounded-full font-bold tracking-widest cursor-pointer text-sm"
-          style={{ border: "1px solid #6b21a888", color: "#9333ea" }}
-        >
-          画像を保存
-        </button>
-        <button
           onClick={onRetry}
-          className="w-full py-3 rounded-full font-bold tracking-widest cursor-pointer text-sm opacity-60"
+          className="w-full py-3 rounded-full font-bold tracking-widest cursor-pointer text-sm"
           style={{ border: "1px solid #ffffff22", color: "#e8e0f0" }}
         >
           もう一度詠唱する
@@ -501,96 +631,4 @@ function ResultScreen({ result, onRetry }: { result: ScoreResult; onRetry: () =>
       </div>
     </div>
   );
-}
-
-async function drawResultCanvas(canvas: HTMLCanvasElement, result: ScoreResult) {
-  const ctx = canvas.getContext("2d")!;
-  const w = canvas.width;
-  const h = canvas.height;
-
-  ctx.fillStyle = "#0a0008";
-  ctx.fillRect(0, 0, w, h);
-
-  const grad = ctx.createRadialGradient(w / 2, h / 2, 50, w / 2, h / 2, 280);
-  grad.addColorStop(0, "#1a001888");
-  grad.addColorStop(1, "transparent");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, w, h);
-
-  ctx.strokeStyle = "#6b21a844";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(w / 2, h / 2, 180, 0, Math.PI * 2);
-  ctx.stroke();
-
-  const rankColor =
-    result.rank === "EX" || result.rank === "SS" ? "#d4a017" :
-    result.rank === "S"  || result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
-
-  ctx.save();
-  ctx.shadowColor = rankColor;
-  ctx.shadowBlur = 40;
-  ctx.fillStyle = rankColor;
-  ctx.font = "bold 100px serif";
-  ctx.textAlign = "center";
-  ctx.fillText(result.rank, w / 2, 118);
-  ctx.restore();
-
-  ctx.fillStyle = "#d4a017";
-  ctx.font = "bold 26px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(result.title, w / 2, 162);
-
-  ctx.fillStyle = "#e8e0f0";
-  ctx.font = "bold 44px sans-serif";
-  ctx.fillText(`${result.total} / 100`, w / 2, 218);
-
-  ctx.fillStyle = "#e8e0f099";
-  ctx.font = "16px sans-serif";
-  ctx.fillText(`「${result.comment}」`, w / 2, 252);
-
-  const bars = [
-    { label: "声量",    value: result.volume,     color: "#6b21a8" },
-    { label: "抑揚",    value: result.intonation,  color: "#9333ea" },
-    { label: "明瞭度",  value: result.clarity,     color: "#7c3aed" },
-    { label: "魂の奔流", value: result.soul,        color: "#cc1a1a" },
-    { label: "厨二力",  value: result.chuuni,      color: "#d4a017" },
-  ];
-
-  const barX = 130, barW = w - barX - 70, barH = 14;
-  let y = 282;
-  ctx.font = "bold 15px sans-serif";
-  for (const bar of bars) {
-    ctx.fillStyle = "#e8e0f022";
-    ctx.fillRect(barX, y, barW, barH);
-    ctx.fillStyle = bar.color;
-    ctx.fillRect(barX, y, (barW * bar.value) / 100, barH);
-    ctx.fillStyle = "#e8e0f0cc";
-    ctx.textAlign = "right";
-    ctx.fillText(bar.label, barX - 10, y + barH - 1);
-    ctx.textAlign = "left";
-    ctx.fillText(String(bar.value), barX + (barW * bar.value) / 100 + 6, y + barH - 1);
-    y += 28;
-  }
-
-  ctx.fillStyle = "#e8e0f044";
-  ctx.font = "13px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("#詠唱力診断", w / 2, h - 14);
-
-  // ロゴ画像を下部中央に描画
-  await new Promise<void>((resolve) => {
-    const logo = new window.Image();
-    logo.onload = () => {
-      const logoSize = 110;
-      const logoX = w / 2 - logoSize / 2;
-      const logoY = y + 8;
-      ctx.globalAlpha = 0.88;
-      ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
-      ctx.globalAlpha = 1;
-      resolve();
-    };
-    logo.onerror = () => resolve();
-    logo.src = "/icon.png";
-  });
 }

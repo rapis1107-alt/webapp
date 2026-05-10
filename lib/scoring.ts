@@ -1,75 +1,117 @@
-export interface AnalysisData {
-  volume: number;       // 0-100
-  intonation: number;  // 0-100
-  clarity: number;     // 0-100
-  duration: number;    // seconds
+import { titles, createResultText } from "../data/titles";
+import { getMetricComment } from "../data/comments";
+
+export interface AudioMetrics {
+  duration: number;
+  expectedSeconds: number;
+  avgVolume: number;
+  maxVolume: number;
+  volumeVariance: number;
+  silenceRatio: number;
+  silenceCount: number;
 }
 
 export interface ScoreResult {
   volume: number;
   intonation: number;
+  duration: number;
   clarity: number;
   soul: number;
-  chuuni: number;
-  total: number;
+  chuni: number;
+  score: number;
   rank: string;
   title: string;
   comment: string;
+  shareText: string;
+  volumeComment: string;
+  intonationComment: string;
+  clarityComment: string;
+  soulComment: string;
 }
 
-const titles: { minScore: number; title: string; comment: string }[] = [
-  { minScore: 95, title: "滅界の覇王", comment: "その詠唱、宇宙が震えた。神々も膝をついた。" },
-  { minScore: 88, title: "闇の使者", comment: "魂が迸っている。厨二の神に選ばれし者よ。" },
-  { minScore: 80, title: "黒炎の詠唱者", comment: "なかなかの覚醒度だ。もう少しで世界が滅ぶところだった。" },
-  { minScore: 70, title: "虚空の見習い", comment: "素質はある。だが魂がまだ目覚めていない。" },
-  { minScore: 58, title: "詠唱修行中", comment: "呪文というより連絡事項に聞こえた。精進せよ。" },
-  { minScore: 45, title: "普通の人間", comment: "魔力：ゼロ。残念ながら君はただの人間だ。" },
-  { minScore: 30, title: "詠唱放棄者", comment: "近所に聞こえていたら通報案件です。" },
-  { minScore: 0,  title: "消滅候補", comment: "これは詠唱ではなく、ただの雑音だ……。" },
-];
-
-const rankThresholds = [
-  { min: 95, rank: "EX" },
-  { min: 88, rank: "SS" },
-  { min: 80, rank: "S" },
-  { min: 70, rank: "A" },
-  { min: 58, rank: "B" },
-  { min: 45, rank: "C" },
-  { min: 30, rank: "D" },
-  { min: 0,  rank: "F" },
-];
-
-function clamp(v: number, min = 0, max = 100) {
-  return Math.min(max, Math.max(min, Math.round(v)));
+function normalize(value: number, min: number, max: number) {
+  return ((value - min) / (max - min)) * 100;
 }
 
-export function calcScore(data: AnalysisData): ScoreResult {
-  const random = (range: number) => (Math.random() - 0.5) * range;
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
 
-  const volume    = clamp(data.volume    + random(20));
-  const intonation = clamp(data.intonation + random(25));
-  const clarity   = clamp(data.clarity   + random(20));
+function scoreDuration(ratio: number) {
+  if (ratio < 0.5)  return 15;
+  if (ratio < 0.7)  return 45;
+  if (ratio <= 1.25) return 90;
+  if (ratio <= 1.6)  return 65;
+  return 40;
+}
 
-  // 魂は声量と抑揚を掛け合わせ + ランダム性
-  const soul = clamp((volume * 0.4 + intonation * 0.4 + data.duration * 3) + random(30));
+function getRank(score: number): keyof typeof titles {
+  if (score >= 95) return "EX";
+  if (score >= 88) return "S";
+  if (score >= 75) return "A";
+  if (score >= 60) return "B";
+  if (score >= 45) return "C";
+  if (score >= 30) return "D";
+  return "E";
+}
 
-  // 厨二力は全体的な迫力 + 大きめのランダム
-  const chuuni = clamp((volume * 0.3 + intonation * 0.3 + soul * 0.3) + random(35));
+function calculateScores(metrics: AudioMetrics) {
+  const durationRatio = metrics.duration / metrics.expectedSeconds;
 
-  const total = clamp((volume + intonation + clarity + soul + chuuni) / 5);
+  let volume     = normalize(metrics.avgVolume,       0.02,  0.18);
+  let intonation = normalize(metrics.volumeVariance,  0.005, 0.08);
+  let duration   = scoreDuration(durationRatio);
+  let clarity    = 100 - metrics.silenceRatio * 140 - metrics.silenceCount * 2;
+  let soul       = volume * 0.45 + intonation * 0.45 + duration * 0.1;
+  let chuni      = intonation * 0.5 + volume * 0.3 + Math.random() * 20;
 
-  const rankObj = rankThresholds.find((r) => total >= r.min) ?? rankThresholds[rankThresholds.length - 1];
-  const titleObj = titles.find((t) => total >= t.minScore) ?? titles[titles.length - 1];
+  volume     = clamp(volume,     0, 100);
+  intonation = clamp(intonation, 0, 100);
+  duration   = clamp(duration,   0, 100);
+  clarity    = clamp(clarity,    0, 100);
+  soul       = clamp(soul,       0, 100);
+  chuni      = clamp(chuni,      0, 100);
+
+  let score =
+    volume     * 0.22 +
+    intonation * 0.24 +
+    duration   * 0.18 +
+    clarity    * 0.18 +
+    soul       * 0.18;
+
+  // 失敗補正（上限キャップ）
+  if (durationRatio < 0.5)             score = Math.min(score, 35);
+  if (metrics.silenceRatio > 0.45)     score = Math.min(score, 45);
+  if (metrics.avgVolume < 0.025)       score = Math.min(score, 30);
+  if (metrics.volumeVariance < 0.008)  score = Math.min(score, 55);
+
+  score = clamp(score, 0, 100);
 
   return {
-    volume,
-    intonation,
-    clarity,
-    soul,
-    chuuni,
-    total,
-    rank: rankObj.rank,
-    title: titleObj.title,
-    comment: titleObj.comment,
+    volume:     Math.round(volume),
+    intonation: Math.round(intonation),
+    duration:   Math.round(duration),
+    clarity:    Math.round(clarity),
+    soul:       Math.round(soul),
+    chuni:      Math.round(chuni),
+    score:      Math.round(score),
+    rank:       getRank(score),
+  };
+}
+
+export function calcScore(metrics: AudioMetrics): ScoreResult {
+  const scores = calculateScores(metrics);
+  const rank = scores.rank;
+  const { title, comment, shareText } = createResultText(rank, scores.score);
+
+  return {
+    ...scores,
+    title,
+    comment,
+    shareText,
+    volumeComment:    getMetricComment("volume",    scores.volume),
+    intonationComment: getMetricComment("intonation", scores.intonation),
+    clarityComment:   getMetricComment("clarity",   scores.clarity),
+    soulComment:      getMetricComment("soul",      scores.soul),
   };
 }
