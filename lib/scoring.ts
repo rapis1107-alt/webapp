@@ -8,7 +8,8 @@ export interface AudioMetrics {
   maxVolume: number;
   volumeVariance: number;
   silenceRatio: number;
-  silenceCount: number;
+  longSilenceCount: number;      // 0.8s〜1.5s の無音区間数
+  veryLongSilenceCount: number;  // 1.5s 以上の無音区間数
 }
 
 export interface ScoreResult {
@@ -60,7 +61,18 @@ function calculateScores(metrics: AudioMetrics) {
   let volume     = normalize(metrics.avgVolume,       0.02,  0.18);
   let intonation = normalize(metrics.volumeVariance,  0.005, 0.08);
   let duration   = scoreDuration(durationRatio);
-  let clarity    = 100 - metrics.silenceRatio * 140 - metrics.silenceCount * 2;
+  const speakingRatio = 1 - metrics.silenceRatio;
+
+  let clarity = 70;
+  if (speakingRatio > 0.55) clarity += 10;
+  if (speakingRatio > 0.70) clarity += 8;
+  if (metrics.avgVolume > 0.04) clarity += 6;
+  if (metrics.avgVolume > 0.08) clarity += 4;
+  clarity -= metrics.longSilenceCount * 8;
+  clarity -= metrics.veryLongSilenceCount * 15;
+  if (durationRatio < 0.6)          clarity -= 25;
+  if (metrics.avgVolume < 0.025)    clarity -= 20;
+  if (metrics.volumeVariance < 0.006) clarity -= 8;
   let soul       = volume * 0.45 + intonation * 0.45 + duration * 0.1;
   let chuni      = intonation * 0.5 + volume * 0.3 + Math.random() * 20;
 

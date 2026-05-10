@@ -68,16 +68,26 @@ export default function Home() {
         ? vols.filter((v) => v < SILENCE_THRESHOLD).length / vols.length
         : 1;
 
-      // 連続する無音区間の数を数える
-      let silenceCount = 0;
-      let inSilence = false;
+      // 無音区間を長さで分類（サンプリング間隔 100ms）
+      // 0.25s未満(< 3frames)は無視、0.8s〜1.5s(8〜14frames)はlongSilence、1.5s以上(>=15frames)はveryLongSilence
+      let longSilenceCount = 0;
+      let veryLongSilenceCount = 0;
+      let silenceRun = 0;
+
+      const classifySilenceRun = (frames: number) => {
+        if (frames >= 15)     veryLongSilenceCount++;
+        else if (frames >= 8) longSilenceCount++;
+        // 3〜7フレーム（0.25〜0.8s）は詠唱の自然な間として無視
+      };
+
       for (const v of vols) {
         if (v < SILENCE_THRESHOLD) {
-          if (!inSilence) { silenceCount++; inSilence = true; }
+          silenceRun++;
         } else {
-          inSilence = false;
+          if (silenceRun > 0) { classifySilenceRun(silenceRun); silenceRun = 0; }
         }
       }
+      if (silenceRun > 0) classifySilenceRun(silenceRun); // 末尾の無音
 
       const volumeVariance = vols.length > 1
         ? Math.sqrt(vols.reduce((s, v) => s + (v - avgVolume) ** 2, 0) / vols.length)
@@ -89,7 +99,8 @@ export default function Home() {
       const score = calcScore({
         duration, expectedSeconds,
         avgVolume, maxVolume,
-        volumeVariance, silenceRatio, silenceCount,
+        volumeVariance, silenceRatio,
+        longSilenceCount, veryLongSilenceCount,
       });
       setResult(score);
       setScreen("result");
