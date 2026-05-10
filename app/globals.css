@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0008;
+  --red: #cc1a1a;
+  --purple: #6b21a8;
+  --gold: #d4a017;
+}
+
+body {
+  background-color: #0a0008;
+  color: #e8e0f0;
+  min-height: 100dvh;
+}
+
+@keyframes rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rotate-reverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  45% { opacity: 0.85; }
+  50% { opacity: 0.6; }
+  55% { opacity: 0.9; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px #cc1a1a88; }
+  50% { box-shadow: 0 0 60px #cc1a1aff, 0 0 100px #6b21a8aa, 0 0 140px #cc1a1a44; }
+}
+
+@keyframes count-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.3); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes float-glow {
+  0%, 100% { opacity: 0.12; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(1.04); }
+}
+
+.magic-circle { animation: rotate-slow 24s linear infinite; }
+.magic-circle-inner { animation: rotate-reverse 14s linear infinite; }
+.magic-circle-bg { animation: float-glow 6s ease-in-out infinite; }
+.flicker { animation: flicker 3s ease-in-out infinite; }
+.pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
+.count-pop { animation: count-pop 0.4s ease-out forwards; }
