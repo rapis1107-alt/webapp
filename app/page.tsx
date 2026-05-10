@@ -428,7 +428,7 @@ function ResultScreen({ result, onRetry }: { result: ScoreResult; onRetry: () =>
   const handleShare = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    drawResultCanvas(canvas, result);
+    await drawResultCanvas(canvas, result);
 
     canvas.toBlob(async (blob) => {
       if (!blob) return;
@@ -445,10 +445,10 @@ function ResultScreen({ result, onRetry }: { result: ScoreResult; onRetry: () =>
     });
   };
 
-  const handleSaveImage = () => {
+  const handleSaveImage = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    drawResultCanvas(canvas, result);
+    await drawResultCanvas(canvas, result);
     const a = document.createElement("a");
     a.href = canvas.toDataURL("image/png");
     a.download = "詠唱力診断結果.png";
@@ -457,7 +457,7 @@ function ResultScreen({ result, onRetry }: { result: ScoreResult; onRetry: () =>
 
   return (
     <div className="flex flex-col items-center gap-6 text-center z-10 w-full max-w-sm">
-      <canvas ref={canvasRef} width={600} height={400} className="hidden" />
+      <canvas ref={canvasRef} width={600} height={520} className="hidden" />
 
       <div className="text-5xl font-bold count-pop" style={{ color: rankColor, textShadow: `0 0 30px ${rankColor}` }}>
         {result.rank}
@@ -503,7 +503,7 @@ function ResultScreen({ result, onRetry }: { result: ScoreResult; onRetry: () =>
   );
 }
 
-function drawResultCanvas(canvas: HTMLCanvasElement, result: ScoreResult) {
+async function drawResultCanvas(canvas: HTMLCanvasElement, result: ScoreResult) {
   const ctx = canvas.getContext("2d")!;
   const w = canvas.width;
   const h = canvas.height;
@@ -577,4 +577,20 @@ function drawResultCanvas(canvas: HTMLCanvasElement, result: ScoreResult) {
   ctx.font = "11px sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("#詠唱力診断", w / 2, h - 16);
+
+  // ロゴ画像を下部中央に描画
+  await new Promise<void>((resolve) => {
+    const logo = new window.Image();
+    logo.onload = () => {
+      const logoSize = 110;
+      const logoX = w / 2 - logoSize / 2;
+      const logoY = y + 8;
+      ctx.globalAlpha = 0.88;
+      ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+      ctx.globalAlpha = 1;
+      resolve();
+    };
+    logo.onerror = () => resolve();
+    logo.src = "/icon.png";
+  });
 }
