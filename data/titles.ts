@@ -56,10 +56,5 @@ export const titles = {
 export function createResultText(rank: keyof typeof titles, score: number) {
   const title = pickRandom(titles[rank]);
   const comment = pickRandom(resultComments[rank]);
-
-  return {
-    title,
-    comment,
-    shareText: `詠唱力診断の結果――\n\n総合ランク：${rank}\nスコア：${score}\n称号：${title}\n\n${comment}\n\n#詠唱力診断`,
-  };
+  return { title, comment };
 }

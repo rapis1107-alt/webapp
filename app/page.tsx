@@ -542,6 +542,7 @@ function ResultScreen({
 }: {
   result: ScoreResult; chant: Chant; onRetry: () => void;
 }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const isFailure = result.rank === "E" || result.rank === "D";
 
   const rankColor =
@@ -549,15 +550,41 @@ function ResultScreen({
     result.rank === "S"  ? "#ff6a00" :
     result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
 
-  const handleShare = () => {
-    window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(result.shareText)}`,
-      "_blank",
-    );
+  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const shareText =
+    `【詠唱力診断】\n称号：${result.title}\nランク：${result.rank}　スコア：${result.score}点\n${result.comment}\n${siteUrl}\n#詠唱力診断`;
+
+  const handleShare = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    await drawResultCanvas(canvas, result, chant.title);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], "chant-result.png", { type: "image/png" });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ title: "詠唱力診断", text: shareText, files: [file] });
+          return;
+        } catch { /* キャンセル等 */ }
+      }
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank");
+    });
+  };
+
+  const handleSaveImage = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    await drawResultCanvas(canvas, result, chant.title);
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = "詠唱力診断結果.png";
+    a.click();
   };
 
   return (
     <div className="flex flex-col items-center gap-5 text-center z-10 w-full max-w-sm pb-4">
+      <canvas ref={canvasRef} width={600} height={560} className="hidden" />
 
       {/* 使用した詠唱名 */}
       <div className="flex flex-col items-center gap-1">
@@ -622,6 +649,13 @@ function ResultScreen({
           𝕏 で結果をシェア
         </button>
         <button
+          onClick={handleSaveImage}
+          className="w-full py-3 rounded-full font-bold tracking-widest cursor-pointer text-sm"
+          style={{ border: "1px solid #6b21a888", color: "#9333ea" }}
+        >
+          画像を保存
+        </button>
+        <button
           onClick={onRetry}
           className="w-full py-3 rounded-full font-bold tracking-widest cursor-pointer text-sm"
           style={{ border: "1px solid #ffffff22", color: "#e8e0f0" }}
@@ -631,4 +665,128 @@ function ResultScreen({
       </div>
     </div>
   );
+}
+
+// ─── Canvas 結果画像生成 ───────────────────────────────────────────────────────
+
+async function drawResultCanvas(
+  canvas: HTMLCanvasElement,
+  result: ScoreResult,
+  chantTitle: string,
+) {
+  const ctx = canvas.getContext("2d")!;
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.fillStyle = "#0a0008";
+  ctx.fillRect(0, 0, w, h);
+
+  const grad = ctx.createRadialGradient(w / 2, h / 2, 50, w / 2, h / 2, 280);
+  grad.addColorStop(0, "#1a001888");
+  grad.addColorStop(1, "transparent");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = "#6b21a844";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(w / 2, h / 2, 185, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const rankColor =
+    result.rank === "EX" ? "#d4a017" :
+    result.rank === "S"  ? "#ff6a00" :
+    result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
+
+  // 詠唱名
+  ctx.fillStyle = "#e8e0f055";
+  ctx.font = "14px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`詠唱：${chantTitle}`, w / 2, 32);
+
+  // ランク
+  ctx.save();
+  ctx.shadowColor = rankColor;
+  ctx.shadowBlur = 40;
+  ctx.fillStyle = rankColor;
+  ctx.font = "bold 96px serif";
+  ctx.textAlign = "center";
+  ctx.fillText(result.rank, w / 2, 122);
+  ctx.restore();
+
+  // 称号
+  ctx.fillStyle = "#d4a017";
+  ctx.font = "bold 24px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(result.title, w / 2, 162);
+
+  // スコア
+  ctx.fillStyle = "#e8e0f0";
+  ctx.font = "bold 40px sans-serif";
+  ctx.fillText(`${result.score} / 100`, w / 2, 210);
+
+  // コメント（長い場合は折り返し）
+  ctx.fillStyle = "#e8e0f099";
+  ctx.font = "15px sans-serif";
+  ctx.textAlign = "center";
+  const commentText = `「${result.comment}」`;
+  const maxW = w - 80;
+  let line = "";
+  let commentY = 246;
+  for (const char of commentText) {
+    const test = line + char;
+    if (ctx.measureText(test).width > maxW && line) {
+      ctx.fillText(line, w / 2, commentY);
+      commentY += 20;
+      line = char;
+    } else {
+      line = test;
+    }
+  }
+  ctx.fillText(line, w / 2, commentY);
+
+  // スコアバー
+  const bars = [
+    { label: "声量",   value: result.volume,     color: "#6b21a8" },
+    { label: "抑揚",   value: result.intonation, color: "#9333ea" },
+    { label: "滑舌",   value: result.clarity,    color: "#7c3aed" },
+    { label: "魂",     value: result.soul,        color: "#cc1a1a" },
+    { label: "厨二力", value: result.chuni,       color: "#d4a017" },
+  ];
+
+  const barX = 130, barW = w - barX - 70, barH = 13;
+  let y = commentY + 24;
+  ctx.font = "bold 14px sans-serif";
+  for (const bar of bars) {
+    ctx.fillStyle = "#e8e0f022";
+    ctx.fillRect(barX, y, barW, barH);
+    ctx.fillStyle = bar.color;
+    ctx.fillRect(barX, y, (barW * bar.value) / 100, barH);
+    ctx.fillStyle = "#e8e0f0cc";
+    ctx.textAlign = "right";
+    ctx.fillText(bar.label, barX - 8, y + barH - 1);
+    ctx.textAlign = "left";
+    ctx.fillText(String(bar.value), barX + (barW * bar.value) / 100 + 6, y + barH - 1);
+    y += 26;
+  }
+
+  // ハッシュタグ
+  ctx.fillStyle = "#e8e0f044";
+  ctx.font = "13px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("#詠唱力診断", w / 2, h - 14);
+
+  // ロゴ
+  await new Promise<void>((resolve) => {
+    const logo = new window.Image();
+    logo.onload = () => {
+      const logoSize = 110;
+      ctx.globalAlpha = 0.88;
+      ctx.drawImage(logo, w / 2 - logoSize / 2, y + 6, logoSize, logoSize);
+      ctx.globalAlpha = 1;
+      resolve();
+    };
+    logo.onerror = () => resolve();
+    logo.src = "/icon.png";
+  });
 }

@@ -22,7 +22,6 @@ export interface ScoreResult {
   rank: string;
   title: string;
   comment: string;
-  shareText: string;
   volumeComment: string;
   intonationComment: string;
   clarityComment: string;
@@ -102,13 +101,12 @@ function calculateScores(metrics: AudioMetrics) {
 export function calcScore(metrics: AudioMetrics): ScoreResult {
   const scores = calculateScores(metrics);
   const rank = scores.rank;
-  const { title, comment, shareText } = createResultText(rank, scores.score);
+  const { title, comment } = createResultText(rank, scores.score);
 
   return {
     ...scores,
     title,
     comment,
-    shareText,
     volumeComment:    getMetricComment("volume",    scores.volume),
     intonationComment: getMetricComment("intonation", scores.intonation),
     clarityComment:   getMetricComment("clarity",   scores.clarity),
