@@ -2,132 +2,190 @@
 
 export default function MagicCircle({ size = 280, color = "#6b21a8" }: { size?: number; color?: string }) {
   const cx = size / 2;
-  const R = size / 2 - 4;
+  const R = size / 2;
 
-  const poly = (sides: number, r: number, offsetDeg = 0) =>
-    Array.from({ length: sides }, (_, i) => {
-      const a = ((i * 360) / sides + offsetDeg - 90) * (Math.PI / 180);
-      return `${cx + r * Math.cos(a)},${cx + r * Math.sin(a)}`;
-    }).join(" ");
+  // radii
+  const rOuter   = R * 0.90;
+  const rRune1   = R * 0.80;
+  const rRune1in = R * 0.72;
+  const rMid     = R * 0.70;
+  const rRune2   = R * 0.62;
+  const rRune2in = R * 0.55;
+  const rInner   = R * 0.53;
+  const rCore    = R * 0.32;
 
-  const star = (sides: number, r: number, r2: number, offsetDeg = 0) => {
-    const pts: string[] = [];
-    for (let i = 0; i < sides * 2; i++) {
-      const a = ((i * 180) / sides + offsetDeg - 90) * (Math.PI / 180);
-      const radius = i % 2 === 0 ? r : r2;
-      pts.push(`${cx + radius * Math.cos(a)},${cx + radius * Math.sin(a)}`);
-    }
-    return pts.join(" ");
+  const red   = "#cc1a1a";
+  const white = "#e8d8ff";
+
+  const toRad = (deg: number) => (deg - 90) * Math.PI / 180;
+
+  // spike diamond at cardinal point
+  const spike = (deg: number, tipR: number, baseR: number, w: number) => {
+    const a = toRad(deg);
+    const pa = a + Math.PI / 2;
+    const tx = cx + tipR * Math.cos(a);
+    const ty = cx + tipR * Math.sin(a);
+    const bx = cx + baseR * Math.cos(a);
+    const by = cx + baseR * Math.sin(a);
+    const mx = cx + (baseR - w * 3) * Math.cos(a);
+    const my = cx + (baseR - w * 3) * Math.sin(a);
+    const lx = bx + w * Math.cos(pa); const ly = by + w * Math.sin(pa);
+    const rx = bx - w * Math.cos(pa); const ry = by - w * Math.sin(pa);
+    // small secondary wings
+    const wx = cx + (baseR + w * 0.5) * Math.cos(a);
+    const wy = cx + (baseR + w * 0.5) * Math.sin(a);
+    const wl = wx + w * 0.5 * Math.cos(pa); const wly = wy + w * 0.5 * Math.sin(pa);
+    const wr = wx - w * 0.5 * Math.cos(pa); const wry = wy - w * 0.5 * Math.sin(pa);
+    return `M${tx},${ty} L${lx},${ly} L${mx},${my} L${rx},${ry} Z
+            M${wl},${wly} L${wx},${wy-w*1.5} L${wr},${wry} Z`;
   };
 
-  const tickMarks = (count: number, r: number, len: number, offsetDeg = 0) =>
-    Array.from({ length: count }, (_, i) => {
-      const a = ((i * 360) / count + offsetDeg) * (Math.PI / 180);
-      const x1 = cx + r * Math.cos(a);
-      const y1 = cx + r * Math.sin(a);
-      const x2 = cx + (r + len) * Math.cos(a);
-      const y2 = cx + (r + len) * Math.sin(a);
-      return `M${x1},${y1}L${x2},${y2}`;
+  // 8-pointed star polygon
+  const star8pts = (scx: number, scy: number, r1: number, r2: number, offset = 0) =>
+    Array.from({ length: 16 }, (_, i) => {
+      const a = toRad(i * 22.5 + offset);
+      const r = i % 2 === 0 ? r1 : r2;
+      return `${scx + r * Math.cos(a)},${scy + r * Math.sin(a)}`;
     }).join(" ");
 
-  const arcDashes = (r: number, count: number, gapDeg = 4) =>
-    Array.from({ length: count }, (_, i) => {
-      const startA = ((i * 360) / count - 90) * (Math.PI / 180);
-      const endA = ((i * 360) / count + 360 / count - gapDeg - 90) * (Math.PI / 180);
-      const lx = cx + r * Math.cos(startA);
-      const ly = cx + r * Math.sin(startA);
-      const ex = cx + r * Math.cos(endA);
-      const ey = cx + r * Math.sin(endA);
-      return `M${lx},${ly} A${r},${r} 0 0,1 ${ex},${ey}`;
+  // 4-pointed compass star
+  const star4pts = (scx: number, scy: number, r1: number, r2: number) =>
+    Array.from({ length: 8 }, (_, i) => {
+      const a = toRad(i * 45);
+      const r = i % 2 === 0 ? r1 : r2;
+      return `${scx + r * Math.cos(a)},${scy + r * Math.sin(a)}`;
     }).join(" ");
 
-  const glowId = `glow-${size}`;
-  const redGlowId = `red-glow-${size}`;
+  // arc dash segments
+  const arcDashes = (r: number, n: number, gap = 5) =>
+    Array.from({ length: n }, (_, i) => {
+      const s = toRad((i * 360) / n);
+      const e = toRad((i * 360) / n + 360 / n - gap);
+      return `M${cx + r * Math.cos(s)},${cx + r * Math.sin(s)} A${r},${r} 0 0,1 ${cx + r * Math.cos(e)},${cx + r * Math.sin(e)}`;
+    }).join(" ");
+
+  // rune tick band
+  const runeBand = (r: number, count: number, h: number) =>
+    Array.from({ length: count }, (_, i) => {
+      const a = toRad((i * 360) / count);
+      const tall = i % 5 === 0;
+      const th = tall ? h * 2 : h;
+      return `M${cx + (r - th / 2) * Math.cos(a)},${cx + (r - th / 2) * Math.sin(a)} L${cx + (r + th / 2) * Math.cos(a)},${cx + (r + th / 2) * Math.sin(a)}`;
+    }).join(" ");
+
+  // satellite circles at ordinal (45°×4)
+  const ordinals = [45, 135, 225, 315];
+  const satR = R * 0.11;
+
+  const gId = `glow-${Math.round(size)}`;
+  const gId2 = `glow2-${Math.round(size)}`;
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <defs>
-        <filter id={glowId} x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
+        <filter id={gId} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="3.5" result="b1" />
+          <feGaussianBlur stdDeviation="9" result="b2" />
           <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
+            <feMergeNode in="b2" /><feMergeNode in="b1" /><feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id={redGlowId} x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="4" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
+        <filter id={gId2} x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="5" result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
 
-      {/* 最外周リング + 目盛り — ゆっくり回転 */}
-      <g className="magic-circle" filter={`url(#${glowId})`}>
-        {/* 外枠二重円 */}
-        <circle cx={cx} cy={cx} r={R} fill="none" stroke={color} strokeWidth="2" opacity="0.9" />
-        <circle cx={cx} cy={cx} r={R - 6} fill="none" stroke={color} strokeWidth="0.6" opacity="0.5" />
+      {/* ── 外周レイヤー（順回転） ── */}
+      <g className="magic-circle" filter={`url(#${gId})`}>
+        {/* 4 cardinal spikes */}
+        {[0, 90, 180, 270].map(deg => (
+          <path key={deg}
+            d={spike(deg, R * 0.99, rOuter, R * 0.028)}
+            fill={white} stroke={color} strokeWidth="0.6" opacity="0.95" />
+        ))}
 
-        {/* 外周アーク分割（24分割） */}
-        <path d={arcDashes(R - 3, 24, 3)} fill="none" stroke={color} strokeWidth="2.5" opacity="0.4" />
+        {/* 外周二重リング */}
+        <circle cx={cx} cy={cx} r={rOuter} fill="none" stroke={color} strokeWidth="2" />
+        <circle cx={cx} cy={cx} r={rOuter - R * 0.012} fill="none" stroke={white} strokeWidth="0.4" opacity="0.5" />
 
-        {/* 目盛り（外側長/短） */}
-        <path d={tickMarks(72, R - 7, -6)} stroke={color} strokeWidth="0.5" opacity="0.5" />
-        <path d={tickMarks(24, R - 7, -10)} stroke={color} strokeWidth="1" opacity="0.8" />
+        {/* 外周アーク分割 */}
+        <path d={arcDashes(rOuter - R * 0.006, 32, 4)} fill="none" stroke={color} strokeWidth="2.5" opacity="0.3" />
 
-        {/* 六芒星（外） */}
-        <polygon points={poly(6, R - 18)} fill="none" stroke={color} strokeWidth="1" opacity="0.7" />
-        <polygon points={poly(6, R - 18, 60)} fill="none" stroke={color} strokeWidth="0.5" opacity="0.35" />
+        {/* ルーン文字帯 1 */}
+        <circle cx={cx} cy={cx} r={rRune1} fill="none" stroke={color} strokeWidth="0.8" opacity="0.6" />
+        <path d={runeBand((rRune1 + rRune1in) / 2, 160, R * 0.022)} stroke={color} strokeWidth="0.7" opacity="0.55" />
+        <circle cx={cx} cy={cx} r={rRune1in} fill="none" stroke={color} strokeWidth="0.8" opacity="0.6" />
 
-        {/* 中間円 */}
-        <circle cx={cx} cy={cx} r={R - 30} fill="none" stroke={color} strokeWidth="0.8" opacity="0.5" />
+        {/* 衛星円 × 4（斜め45°） */}
+        {ordinals.map(deg => {
+          const a = toRad(deg);
+          const sx = cx + rOuter * Math.cos(a);
+          const sy = cx + rOuter * Math.sin(a);
+          return (
+            <g key={deg}>
+              <circle cx={sx} cy={sy} r={satR} fill="#0a0008" stroke={color} strokeWidth="1.4" />
+              <circle cx={sx} cy={sy} r={satR * 0.7} fill="none" stroke={color} strokeWidth="0.5" opacity="0.5" />
+              <polygon points={star8pts(sx, sy, satR * 0.62, satR * 0.32)}
+                fill="none" stroke={white} strokeWidth="0.9" opacity="0.9" />
+              <circle cx={sx} cy={sy} r={satR * 0.14} fill={white} opacity="0.9" />
+            </g>
+          );
+        })}
+
+        {/* 中間リング */}
+        <circle cx={cx} cy={cx} r={rMid} fill="none" stroke={color} strokeWidth="1.2" opacity="0.8" />
       </g>
 
-      {/* 中層 — 逆回転 */}
-      <g className="magic-circle-inner" filter={`url(#${redGlowId})`}>
-        {/* 赤ライン円 */}
-        <circle cx={cx} cy={cx} r={R - 44} fill="none" stroke="#cc1a1a" strokeWidth="1.5" opacity="0.9" />
-        <circle cx={cx} cy={cx} r={R - 50} fill="none" stroke="#cc1a1a" strokeWidth="0.5" opacity="0.4" />
+      {/* ── 内周レイヤー（逆回転） ── */}
+      <g className="magic-circle-inner" filter={`url(#${gId})`}>
+        {/* ルーン文字帯 2（赤） */}
+        <circle cx={cx} cy={cx} r={rRune2} fill="none" stroke={red} strokeWidth="0.8" opacity="0.7" />
+        <path d={runeBand((rRune2 + rRune2in) / 2, 120, R * 0.020)} stroke={red} strokeWidth="0.7" opacity="0.5" />
+        <circle cx={cx} cy={cx} r={rRune2in} fill="none" stroke={red} strokeWidth="0.8" opacity="0.7" />
 
-        {/* 赤スター（五芒星） */}
-        <polygon points={star(5, R - 44, R * 0.38)} fill="none" stroke="#cc1a1a" strokeWidth="1.2" opacity="0.85" />
+        {/* 内周リング */}
+        <circle cx={cx} cy={cx} r={rInner} fill="none" stroke={red} strokeWidth="1.5" />
+        <circle cx={cx} cy={cx} r={rInner - R * 0.015} fill="none" stroke={red} strokeWidth="0.4" opacity="0.4" />
 
-        {/* 五角形（反転） */}
-        <polygon points={poly(5, R - 50, 36)} fill="none" stroke="#cc1a1a" strokeWidth="0.6" opacity="0.45" />
+        {/* 内部ジオメトリ：8芒星 */}
+        <polygon points={star8pts(cx, cx, rInner * 0.88, rInner * 0.50)}
+          fill="none" stroke={red} strokeWidth="1.2" opacity="0.85" />
+        <polygon points={star8pts(cx, cx, rInner * 0.75, rInner * 0.42, 22.5)}
+          fill="none" stroke={color} strokeWidth="0.7" opacity="0.55" />
 
-        {/* 内側アーク分割（12分割） */}
-        <path d={arcDashes(R - 46, 12, 8)} fill="none" stroke="#cc1a1a" strokeWidth="1.5" opacity="0.5" />
-
-        {/* 細かい目盛り */}
-        <path d={tickMarks(60, R - 52, 5)} stroke="#cc1a1a" strokeWidth="0.5" opacity="0.4" />
+        {/* 四方向スパイク（内側） */}
+        {[0, 90, 180, 270].map(deg => {
+          const a = toRad(deg);
+          const px = cx + rInner * Math.cos(a);
+          const py = cx + rInner * Math.sin(a);
+          const pa = a + Math.PI / 2;
+          return (
+            <path key={deg}
+              d={`M${px},${py} L${cx + R * 0.035 * Math.cos(pa)},${cx + R * 0.035 * Math.sin(pa)} L${cx + rInner * 0.55 * Math.cos(a)},${cx + rInner * 0.55 * Math.sin(a)} L${cx - R * 0.035 * Math.cos(pa)},${cx - R * 0.035 * Math.sin(pa)} Z`}
+              fill={red} stroke={white} strokeWidth="0.4" opacity="0.75" />
+          );
+        })}
       </g>
 
-      {/* 最内層 — ゆっくり順回転（別速度） */}
-      <g style={{ transformOrigin: `${cx}px ${cx}px`, animation: "rotate-slow 35s linear infinite reverse" }}>
-        <circle cx={cx} cy={cx} r={R * 0.28} fill="none" stroke={color} strokeWidth="1" opacity="0.7" />
-        <polygon points={poly(3, R * 0.24, 0)} fill="none" stroke={color} strokeWidth="0.8" opacity="0.6" />
-        <polygon points={poly(3, R * 0.24, 180)} fill="none" stroke={color} strokeWidth="0.8" opacity="0.6" />
-        {/* 六芒星ミニ */}
-        <polygon points={poly(6, R * 0.18)} fill="none" stroke={color} strokeWidth="0.6" opacity="0.5" />
+      {/* ── コアレイヤー（独立ゆっくり逆回転） ── */}
+      <g style={{ transformOrigin: `${cx}px ${cx}px`, animation: "rotate-slow 50s linear infinite reverse" }}
+        filter={`url(#${gId2})`}>
+        <circle cx={cx} cy={cx} r={rCore} fill="none" stroke={color} strokeWidth="1" opacity="0.8" />
+        {/* 4芒星コンパス */}
+        <polygon points={star4pts(cx, cx, rCore * 0.95, rCore * 0.35)}
+          fill="none" stroke={white} strokeWidth="1.2" opacity="0.9" />
+        {/* 斜め4芒星 */}
+        <polygon points={star4pts(cx, cx, rCore * 0.7, rCore * 0.28)}
+          fill="none" stroke={color} strokeWidth="0.8" opacity="0.7"
+          transform={`rotate(45 ${cx} ${cx})`} />
+        {/* 中心円 */}
+        <circle cx={cx} cy={cx} r={rCore * 0.25} fill={color} opacity="0.9" />
       </g>
 
-      {/* 中心コア */}
-      <circle cx={cx} cy={cx} r="5" fill={color} opacity="0.9" filter={`url(#${glowId})`} />
-      <circle cx={cx} cy={cx} r="2.5" fill="#ffffff" opacity="0.8" />
-
-      {/* コーナー装飾ダイヤ（四隅のルーン的アクセント） */}
-      {[0, 90, 180, 270].map((deg) => {
-        const a = (deg - 90) * (Math.PI / 180);
-        const rx = cx + (R - 24) * Math.cos(a);
-        const ry = cx + (R - 24) * Math.sin(a);
-        return (
-          <g key={deg} transform={`rotate(${deg} ${cx} ${cx})`}>
-            <circle cx={rx} cy={ry} r="3.5" fill="none" stroke={color} strokeWidth="1" opacity="0.7" />
-            <circle cx={rx} cy={ry} r="1.5" fill={color} opacity="0.8" />
-          </g>
-        );
-      })}
+      {/* 中心輝点 */}
+      <circle cx={cx} cy={cx} r={R * 0.045} fill={color} filter={`url(#${gId2})`} opacity="1" />
+      <circle cx={cx} cy={cx} r={R * 0.022} fill={white} opacity="1" />
     </svg>
   );
 }

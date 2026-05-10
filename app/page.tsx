@@ -422,10 +422,27 @@ function ResultScreen({ result, onRetry }: { result: ScoreResult; onRetry: () =>
     result.rank === "EX" || result.rank === "SS" ? "#d4a017" :
     result.rank === "S"  || result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
 
-  const shareText = `【詠唱力診断】\n称号：${result.title}\nランク：${result.rank}　総合：${result.total}点\n${result.comment}\n#詠唱力診断`;
+  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const shareText = `【詠唱力診断】\n称号：${result.title}\nランク：${result.rank}　総合：${result.total}点\n${result.comment}\n${siteUrl}\n#詠唱力診断`;
 
-  const handleShare = () => {
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank");
+  const handleShare = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    drawResultCanvas(canvas, result);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], "chant-result.png", { type: "image/png" });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ title: "詠唱力診断", text: shareText, files: [file] });
+          return;
+        } catch { /* キャンセルなど */ }
+      }
+      // フォールバック：テキストのみでX投稿
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank");
+    });
   };
 
   const handleSaveImage = () => {

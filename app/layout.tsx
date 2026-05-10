@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "詠唱力診断",
   description: "汝の詠唱力を今こそ証明せよ",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
