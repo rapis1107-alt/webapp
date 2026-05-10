@@ -105,7 +105,7 @@ export default function Home() {
       });
       setResult(score);
       setScreen("result");
-      gtagEvent("chant_result", { rank: score.rank, score: score.score, chant_id: chant?.id });
+      gtagEvent("chant_result");
     }, 2200);
   };
 
@@ -176,7 +176,7 @@ export default function Home() {
     setChant(c);
     setCountdown(3);
     setScreen("countdown");
-    gtagEvent("chant_start", { chant_id: c.id, difficulty: c.difficulty });
+    gtagEvent("chant_start");
 
     let count = 3;
     const iv = setInterval(() => {
@@ -577,7 +577,7 @@ function ResultScreen({
   const handleShare = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    gtagEvent("share_click", { rank: result.rank, score: result.score });
+    gtagEvent("share_click");
 
     // iOS/Android: Web Share API でネイティブシェートシート（ポップアップ不要）
     if (typeof navigator.share === "function") {
