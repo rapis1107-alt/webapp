@@ -529,25 +529,25 @@ async function drawResultCanvas(canvas: HTMLCanvasElement, result: ScoreResult) 
 
   ctx.save();
   ctx.shadowColor = rankColor;
-  ctx.shadowBlur = 30;
+  ctx.shadowBlur = 40;
   ctx.fillStyle = rankColor;
-  ctx.font = "bold 80px serif";
+  ctx.font = "bold 100px serif";
   ctx.textAlign = "center";
-  ctx.fillText(result.rank, w / 2, 110);
+  ctx.fillText(result.rank, w / 2, 118);
   ctx.restore();
 
   ctx.fillStyle = "#d4a017";
-  ctx.font = "bold 20px sans-serif";
+  ctx.font = "bold 26px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(result.title, w / 2, 150);
+  ctx.fillText(result.title, w / 2, 162);
 
   ctx.fillStyle = "#e8e0f0";
-  ctx.font = "bold 36px sans-serif";
-  ctx.fillText(`${result.total} / 100`, w / 2, 200);
+  ctx.font = "bold 44px sans-serif";
+  ctx.fillText(`${result.total} / 100`, w / 2, 218);
 
-  ctx.fillStyle = "#e8e0f088";
-  ctx.font = "14px sans-serif";
-  ctx.fillText(`「${result.comment}」`, w / 2, 235);
+  ctx.fillStyle = "#e8e0f099";
+  ctx.font = "16px sans-serif";
+  ctx.fillText(`「${result.comment}」`, w / 2, 252);
 
   const bars = [
     { label: "声量",    value: result.volume,     color: "#6b21a8" },
@@ -557,26 +557,26 @@ async function drawResultCanvas(canvas: HTMLCanvasElement, result: ScoreResult) 
     { label: "厨二力",  value: result.chuuni,      color: "#d4a017" },
   ];
 
-  const barX = 80, barW = w - 160, barH = 10;
-  let y = 270;
-  ctx.font = "12px sans-serif";
+  const barX = 130, barW = w - barX - 70, barH = 14;
+  let y = 282;
+  ctx.font = "bold 15px sans-serif";
   for (const bar of bars) {
-    ctx.fillStyle = "#e8e0f055";
+    ctx.fillStyle = "#e8e0f022";
     ctx.fillRect(barX, y, barW, barH);
     ctx.fillStyle = bar.color;
     ctx.fillRect(barX, y, (barW * bar.value) / 100, barH);
-    ctx.fillStyle = "#e8e0f088";
+    ctx.fillStyle = "#e8e0f0cc";
     ctx.textAlign = "right";
-    ctx.fillText(bar.label, barX - 8, y + 9);
+    ctx.fillText(bar.label, barX - 10, y + barH - 1);
     ctx.textAlign = "left";
-    ctx.fillText(String(bar.value), barX + (barW * bar.value) / 100 + 4, y + 9);
-    y += 22;
+    ctx.fillText(String(bar.value), barX + (barW * bar.value) / 100 + 6, y + barH - 1);
+    y += 28;
   }
 
-  ctx.fillStyle = "#e8e0f033";
-  ctx.font = "11px sans-serif";
+  ctx.fillStyle = "#e8e0f044";
+  ctx.font = "13px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("#詠唱力診断", w / 2, h - 16);
+  ctx.fillText("#詠唱力診断", w / 2, h - 14);
 
   // ロゴ画像を下部中央に描画
   await new Promise<void>((resolve) => {
