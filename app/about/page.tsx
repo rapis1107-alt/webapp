@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AdBanner from "../../components/AdBanner";
 
 export const metadata: Metadata = {
   title: "詠唱力診断とは | 詠唱力診断",
@@ -113,6 +114,9 @@ export default function AboutPage() {
           </ul>
         </section>
 
+        <div className="pt-4">
+          <AdBanner slot="ABOUT_PAGE_SLOT" />
+        </div>
       </div>
     </main>
   );

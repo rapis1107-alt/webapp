@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AdBanner from "../../components/AdBanner";
 
 export const metadata: Metadata = {
   title: "プライバシーポリシー | 詠唱力診断",
@@ -132,6 +133,10 @@ export default function PrivacyPage() {
         </section>
 
         <p className="text-xs opacity-40 pt-4">最終更新：2026年5月</p>
+
+        <div className="pt-4">
+          <AdBanner slot="PRIVACY_PAGE_SLOT" />
+        </div>
       </div>
     </main>
   );
