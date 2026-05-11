@@ -22,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <footer className="w-full text-center py-4 mt-auto" style={{ borderTop: "1px solid #ffffff0a" }}>
           <nav className="flex justify-center gap-6 text-xs opacity-30 hover:opacity-50 transition-opacity">
+            <Link href="/about" className="hover:opacity-80">詠唱力診断とは</Link>
             <Link href="/privacy" className="hover:opacity-80">プライバシーポリシー</Link>
             <Link href="/contact" className="hover:opacity-80">お問い合わせ</Link>
           </nav>
