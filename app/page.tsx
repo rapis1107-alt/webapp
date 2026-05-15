@@ -617,12 +617,14 @@ function ResultScreen({
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (isMobile) {
-      // スマホ: X アプリを直接起動、未インストールなら Web にフォールバック
+      // スマホ: X アプリを直接起動、アプリが開いたら document.hidden になるのでフォールバックしない
       const appUrl = `twitter://post?message=${encodeURIComponent(shareText)}`;
       window.location.href = appUrl;
       setTimeout(() => {
-        window.open(twitterWebUrl, "_blank");
-      }, 500);
+        if (!document.hidden) {
+          window.open(twitterWebUrl, "_blank");
+        }
+      }, 1500);
     } else {
       // PC: X を直接開く
       window.open(twitterWebUrl, "_blank");
