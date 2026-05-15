@@ -25,7 +25,7 @@ export default function AboutPage() {
           <p>
             「詠唱力診断」は、画面に表示された呪文（詠唱文）をマイクに向かって読み上げ、
             その声を解析してあなたの「詠唱力」を診断するWebアプリです。
-            声量・抑揚・滑舌・魂の4軸でスコアを算出し、EX〜Eまで7段階のランクと称号を授与します。
+            声量・抑揚・詠唱安定度・魂の4軸でスコアを算出し、EX〜Eまで7段階のランクと称号を授与します。
           </p>
           <p className="mt-2">
             診断はすべてブラウザ上で完結し、音声データが外部サーバーへ送信されることはありません。
@@ -55,7 +55,7 @@ export default function AboutPage() {
           <ul className="list-disc list-inside mt-2 space-y-1">
             <li><span style={{ color: "#4ade80" }}>EASY</span>：短い呪文。初めての方でも安心</li>
             <li><span style={{ color: "#9333ea" }}>NORMAL</span>：標準的な長さ。声量と抑揚が問われる</li>
-            <li><span style={{ color: "#cc1a1a" }}>HARD</span>：長く難解な呪文。滑舌が鍵</li>
+            <li><span style={{ color: "#cc1a1a" }}>HARD</span>：長く難解な呪文。詠唱安定度が鍵</li>
             <li><span style={{ color: "#d4a017" }}>EXPERT</span>：最高難度。魂を込めた詠唱が求められる</li>
           </ul>
         </section>
@@ -73,12 +73,12 @@ export default function AboutPage() {
               <p className="text-xs opacity-60">声の強弱・変化を測定します。単調な棒読みではなく、感情を込めた読み上げが評価されます。</p>
             </div>
             <div className="rounded-xl p-4" style={{ background: "#1a0028", border: "1px solid #6b21a833" }}>
-              <p className="font-bold mb-1">滑舌</p>
+              <p className="font-bold mb-1">詠唱安定度</p>
               <p className="text-xs opacity-60">詠唱中の無音区間を分析します。自然な間は問題ありませんが、長すぎる沈黙はペナルティになります。</p>
             </div>
             <div className="rounded-xl p-4" style={{ background: "#1a0028", border: "1px solid #6b21a833" }}>
               <p className="font-bold mb-1">魂</p>
-              <p className="text-xs opacity-60">声量・抑揚・滑舌を総合した「魂の込め方」を測定する独自の指標です。</p>
+              <p className="text-xs opacity-60">声量・抑揚・詠唱安定度を総合した「魂の込め方」を測定する独自の指標です。</p>
             </div>
           </div>
         </section>

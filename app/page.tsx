@@ -567,7 +567,7 @@ function ResultScreen({
 
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
   const shareText =
-    `【詠唱力診断】\n我が名は『${result.title}』\n魔導ランク ${result.rank}（${result.score}点）\n滑舌 ${result.clarity} / 魂 ${result.soul}\n次の挑戦者、来い。\n${siteUrl}\n#詠唱力診断`;
+    `【詠唱力診断】\n我が名は『${result.title}』\n魔導ランク ${result.rank}（${result.score}点）\n詠唱安定度 ${result.clarity} / 魂 ${result.soul}\n次の挑戦者、来い。\n${siteUrl}\n#詠唱力診断`;
 
   // 結果表示と同時にキャンバスを事前描画（ボタン押下時に非同期処理が不要になりポップアップブロックを回避）
   useEffect(() => {
@@ -658,7 +658,7 @@ function ResultScreen({
       <div className="w-full space-y-3 py-1">
         <ScoreBar label="声量"   value={result.volume}     color="#6b21a8" comment={result.volumeComment} />
         <ScoreBar label="抑揚"   value={result.intonation} color="#9333ea" comment={result.intonationComment} />
-        <ScoreBar label="滑舌"   value={result.clarity}    color="#7c3aed" comment={result.clarityComment} />
+        <ScoreBar label="詠唱安定度" value={result.clarity}    color="#7c3aed" comment={result.clarityComment} />
         <ScoreBar label="魂"     value={result.soul}       color="#cc1a1a" comment={result.soulComment} />
         <ScoreBar label="厨二力" value={result.chuni}      color="#d4a017" />
       </div>
@@ -774,7 +774,7 @@ async function drawResultCanvas(
   const bars = [
     { label: "声量",   value: result.volume,     color: "#6b21a8" },
     { label: "抑揚",   value: result.intonation, color: "#9333ea" },
-    { label: "滑舌",   value: result.clarity,    color: "#7c3aed" },
+    { label: "詠唱安定度", value: result.clarity,    color: "#7c3aed" },
     { label: "魂",     value: result.soul,        color: "#cc1a1a" },
     { label: "厨二力", value: result.chuni,       color: "#d4a017" },
   ];
