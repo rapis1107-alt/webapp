@@ -567,7 +567,7 @@ function ResultScreen({
 
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
   const shareText =
-    `【詠唱力診断】\n我が名は『${result.title}』\n魔導ランク ${result.rank}（${result.score}点）\n詠唱安定度 ${result.clarity} / 魂 ${result.soul}\n次の挑戦者、来い。\n${siteUrl}\n#詠唱力診断`;
+    `【詠唱力診断】\n\n我が称号は『${result.title}』\n魔導ランク：${result.rank}\n総合詠唱力：${result.score}点\n\n声量 ${result.volume} / 抑揚 ${result.intonation} / 詠唱安定度 ${result.clarity} / 魂 ${result.soul} / 厨二力 ${result.chuni}\n\n次の詠唱者、出でよ。\n\n${siteUrl}\n#詠唱力診断`;
 
   // 結果表示と同時にキャンバスを事前描画（ボタン押下時に非同期処理が不要になりポップアップブロックを回避）
   useEffect(() => {
@@ -794,6 +794,13 @@ async function drawResultCanvas(
     ctx.fillText(String(bar.value), barX + (barW * bar.value) / 100 + 6, y + barH - 1);
     y += 26;
   }
+
+  // URL
+  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  ctx.fillStyle = "#e8e0f066";
+  ctx.font = "11px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(siteUrl, w / 2, h - 28);
 
   // ハッシュタグ
   ctx.fillStyle = "#e8e0f044";
