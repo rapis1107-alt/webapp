@@ -567,7 +567,7 @@ function ResultScreen({
 
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
   const shareText =
-    `【詠唱力診断】\n称号：${result.title}\nランク：${result.rank}　スコア：${result.score}点\n${result.comment}\n${siteUrl}\n#詠唱力診断`;
+    `【詠唱力診断】\n我が名は『${result.title}』\n魔導ランク ${result.rank}（${result.score}点）\n滑舌 ${result.clarity} / 魂 ${result.soul}\n次の挑戦者、来い。\n${siteUrl}\n#詠唱力診断`;
 
   // 結果表示と同時にキャンバスを事前描画（ボタン押下時に非同期処理が不要になりポップアップブロックを回避）
   useEffect(() => {
