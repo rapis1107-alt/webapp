@@ -795,13 +795,6 @@ async function drawResultCanvas(
     y += 26;
   }
 
-  // URL
-  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
-  ctx.fillStyle = "#e8e0f066";
-  ctx.font = "11px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(siteUrl, w / 2, h - 28);
-
   // ハッシュタグ
   ctx.fillStyle = "#e8e0f044";
   ctx.font = "13px sans-serif";
