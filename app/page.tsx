@@ -552,12 +552,41 @@ function ScoreBar({
 
 // ─── ResultScreen ─────────────────────────────────────────────────────────────
 
+const TAUNT_MESSAGES = [
+  "次の詠唱者、出でよ",
+  "貴様もこの禁術を扱えるか",
+  "我が詠唱を超えてみせよ",
+  "この契約に応えられる者はいるか",
+  "次なる契約者を待つ",
+  "この魔導に耐えられるか",
+  "我に続く者、現れよ",
+  "真の詠唱者を見せてもらおう",
+  "この程度で震えてはいまいな",
+  "まだ口が回るなら挑んでみよ",
+  "魔力なき者は立ち去るがいい",
+  "噛まずに唱えられる者だけ来い",
+  "この詠唱、最後まで耐えられるか",
+  "我が禁術の前で膝をつくか",
+  "舌を噛んでも責任は負わぬ",
+  "途中で息切れしても泣くな",
+  "詠唱事故報告、待っている",
+  "魔導士の実力を見せつけよ",
+  "封印解除には肺活量が必要だ",
+  "近隣への配慮は各自で頼む",
+];
+
+function pickTaunt(exclude: string): string {
+  const pool = TAUNT_MESSAGES.filter((m) => m !== exclude);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function ResultScreen({
   result, chant, onRetry,
 }: {
   result: ScoreResult; chant: Chant; onRetry: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lastTauntRef = useRef<string>("");
   const isFailure = result.rank === "E" || result.rank === "D";
 
   const rankColor =
@@ -566,8 +595,11 @@ function ResultScreen({
     result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
 
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const shareText =
-    `【詠唱力診断】\n\n我が称号は『${result.title}』\n魔導ランク：${result.rank}\n総合詠唱力：${result.score}点\n\n声量 ${result.volume} / 抑揚 ${result.intonation} / 詠唱安定度 ${result.clarity} / 魂 ${result.soul} / 厨二力 ${result.chuni}\n\n次の詠唱者、出でよ。\n\n${siteUrl}\n#詠唱力診断`;
+  const buildShareText = () => {
+    const taunt = pickTaunt(lastTauntRef.current);
+    lastTauntRef.current = taunt;
+    return `【詠唱力診断】\n\n我が称号は『${result.title}』\n魔導ランク：${result.rank}\n総合詠唱力：${result.score}点\n\n声量 ${result.volume} / 抑揚 ${result.intonation} / 詠唱安定度 ${result.clarity} / 魂 ${result.soul} / 厨二力 ${result.chuni}\n\n${taunt}\n\n${siteUrl}\n#詠唱力診断`;
+  };
 
   // 結果表示と同時にキャンバスを事前描画（ボタン押下時に非同期処理が不要になりポップアップブロックを回避）
   useEffect(() => {
@@ -580,6 +612,7 @@ function ResultScreen({
     if (!canvas) return;
     gtagEvent("share_click");
 
+    const shareText = buildShareText();
     const twitterWebUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 

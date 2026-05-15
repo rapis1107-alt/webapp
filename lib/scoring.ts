@@ -45,14 +45,30 @@ function scoreDuration(ratio: number) {
   return 40;
 }
 
-function getRank(score: number): keyof typeof titles {
-  if (score >= 95) return "EX";
-  if (score >= 88) return "S";
-  if (score >= 75) return "A";
-  if (score >= 60) return "B";
-  if (score >= 45) return "C";
-  if (score >= 30) return "D";
-  return "E";
+interface RawScores {
+  volume: number;
+  intonation: number;
+  duration: number;
+  clarity: number;
+}
+
+function getRank(score: number, s: RawScores): keyof typeof titles {
+  // スコアによる基本ランク
+  let rank: keyof typeof titles;
+  if      (score >= 96) rank = "EX";
+  else if (score >= 90) rank = "S";
+  else if (score >= 82) rank = "A";
+  else if (score >= 68) rank = "B";
+  else if (score >= 52) rank = "C";
+  else if (score >= 35) rank = "D";
+  else                  rank = "E";
+
+  // 上位ランクの最低条件チェック（条件未達なら1段階降格）
+  if (rank === "EX" && !(s.volume >= 75 && s.intonation >= 88 && s.duration >= 90 && s.clarity >= 88)) rank = "S";
+  if (rank === "S"  && !(s.volume >= 65 && s.intonation >= 75 && s.duration >= 80 && s.clarity >= 80)) rank = "A";
+  if (rank === "A"  && !(s.volume >= 50 && s.intonation >= 55 && s.duration >= 70 && s.clarity >= 70)) rank = "B";
+
+  return rank;
 }
 
 function calculateScores(metrics: AudioMetrics) {
@@ -63,18 +79,20 @@ function calculateScores(metrics: AudioMetrics) {
   let duration   = scoreDuration(durationRatio);
   const speakingRatio = 1 - metrics.silenceRatio;
 
-  let clarity = 70;
+  // 基礎点を55に引き下げ
+  let clarity = 55;
   if (speakingRatio > 0.55) clarity += 10;
   if (speakingRatio > 0.70) clarity += 8;
   if (metrics.avgVolume > 0.04) clarity += 6;
   if (metrics.avgVolume > 0.08) clarity += 4;
   clarity -= metrics.longSilenceCount * 8;
   clarity -= metrics.veryLongSilenceCount * 15;
-  if (durationRatio < 0.6)          clarity -= 25;
-  if (metrics.avgVolume < 0.025)    clarity -= 20;
+  if (durationRatio < 0.6)            clarity -= 25;
+  if (metrics.avgVolume < 0.025)      clarity -= 20;
   if (metrics.volumeVariance < 0.006) clarity -= 8;
-  let soul       = volume * 0.45 + intonation * 0.45 + duration * 0.1;
-  let chuni      = intonation * 0.5 + volume * 0.3 + Math.random() * 20;
+
+  let soul  = volume * 0.45 + intonation * 0.45 + duration * 0.1;
+  let chuni = intonation * 0.5 + volume * 0.3 + Math.random() * 20;
 
   volume     = clamp(volume,     0, 100);
   intonation = clamp(intonation, 0, 100);
@@ -91,22 +109,30 @@ function calculateScores(metrics: AudioMetrics) {
     soul       * 0.18;
 
   // 失敗補正（上限キャップ）
-  if (durationRatio < 0.5)             score = Math.min(score, 35);
-  if (metrics.silenceRatio > 0.45)     score = Math.min(score, 45);
-  if (metrics.avgVolume < 0.025)       score = Math.min(score, 30);
-  if (metrics.volumeVariance < 0.008)  score = Math.min(score, 55);
+  if (durationRatio < 0.5)            score = Math.min(score, 34);
+  if (metrics.silenceRatio > 0.45)    score = Math.min(score, 45);
+  if (metrics.avgVolume < 0.025)      score = Math.min(score, 30);
+  if (metrics.volumeVariance < 0.008) score = Math.min(score, 51);
+
+  // 抑揚不足による上限キャップ（棒読み対策）
+  if (intonation < 40) score = Math.min(score, 81); // 最大Bランク
+  if (intonation < 55) score = Math.min(score, 89); // 最大Aランク
 
   score = clamp(score, 0, 100);
 
-  return {
+  const raw: RawScores = {
     volume:     Math.round(volume),
     intonation: Math.round(intonation),
     duration:   Math.round(duration),
     clarity:    Math.round(clarity),
-    soul:       Math.round(soul),
-    chuni:      Math.round(chuni),
-    score:      Math.round(score),
-    rank:       getRank(score),
+  };
+
+  return {
+    ...raw,
+    soul:  Math.round(soul),
+    chuni: Math.round(chuni),
+    score: Math.round(score),
+    rank:  getRank(score, raw),
   };
 }
 
