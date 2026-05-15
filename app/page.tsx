@@ -580,25 +580,20 @@ function ResultScreen({
     if (!canvas) return;
     gtagEvent("share_click");
 
-    // iOS/Android: Web Share API でネイティブシェートシート（ポップアップ不要）
-    if (typeof navigator.share === "function") {
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const file = new File([blob], "chant-result.png", { type: "image/png" });
-        if (navigator.canShare?.({ files: [file] })) {
-          navigator.share({ title: "詠唱力診断", text: shareText, files: [file] }).catch(() => {});
-        } else {
-          navigator.share({ title: "詠唱力診断", text: shareText }).catch(() => {});
-        }
-      });
-      return;
-    }
+    const twitterWebUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    // デスクトップ: 同期的に window.open（ポップアップブロックされない）
-    window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
-      "_blank",
-    );
+    if (isMobile) {
+      // スマホ: X アプリを直接起動、未インストールなら Web にフォールバック
+      const appUrl = `twitter://post?message=${encodeURIComponent(shareText)}`;
+      window.location.href = appUrl;
+      setTimeout(() => {
+        window.open(twitterWebUrl, "_blank");
+      }, 500);
+    } else {
+      // PC: X を直接開く
+      window.open(twitterWebUrl, "_blank");
+    }
   };
 
   const handleSaveImage = () => {
