@@ -52,8 +52,28 @@ interface RawScores {
   clarity: number;
 }
 
+// 声量を非線形スコアに変換（普通読みで50〜70、本気で80〜90に収まるよう設計）
+function scoreVolume(avgVolume: number): number {
+  const points: [number, number][] = [
+    [0.006, 0],
+    [0.02,  50],
+    [0.04,  70],
+    [0.06,  85],
+    [0.075, 100],
+  ];
+  if (avgVolume <= points[0][0]) return points[0][1];
+  if (avgVolume >= points[points.length - 1][0]) return points[points.length - 1][1];
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x0, y0] = points[i];
+    const [x1, y1] = points[i + 1];
+    if (avgVolume <= x1) {
+      return y0 + (y1 - y0) * (avgVolume - x0) / (x1 - x0);
+    }
+  }
+  return 100;
+}
+
 function getRank(score: number, s: RawScores): keyof typeof titles {
-  // スコアによる基本ランク
   let rank: keyof typeof titles;
   if      (score >= 96) rank = "EX";
   else if (score >= 90) rank = "S";
@@ -63,10 +83,10 @@ function getRank(score: number, s: RawScores): keyof typeof titles {
   else if (score >= 35) rank = "D";
   else                  rank = "E";
 
-  // 上位ランクの最低条件チェック（条件未達なら1段階降格）
-  if (rank === "EX" && !(s.volume >= 75 && s.intonation >= 88 && s.duration >= 90 && s.clarity >= 88)) rank = "S";
-  if (rank === "S"  && !(s.volume >= 65 && s.intonation >= 75 && s.duration >= 80 && s.clarity >= 80)) rank = "A";
-  if (rank === "A"  && !(s.volume >= 50 && s.intonation >= 55 && s.duration >= 70 && s.clarity >= 70)) rank = "B";
+  // 上位ランクの最低条件チェック（声量条件を緩和・抑揚重視に変更）
+  if (rank === "EX" && !(s.intonation >= 88 && s.duration >= 90 && s.clarity >= 88 && s.volume >= 55)) rank = "S";
+  if (rank === "S"  && !(s.intonation >= 75 && s.duration >= 80 && s.clarity >= 80 && s.volume >= 45)) rank = "A";
+  if (rank === "A"  && !(s.intonation >= 55 && s.duration >= 70 && s.clarity >= 70 && s.volume >= 35)) rank = "B";
 
   return rank;
 }
@@ -74,14 +94,13 @@ function getRank(score: number, s: RawScores): keyof typeof titles {
 function calculateScores(metrics: AudioMetrics) {
   const durationRatio = metrics.duration / metrics.expectedSeconds;
 
-  let volume     = normalize(metrics.avgVolume,      0.01,  0.10);
-  let intonation = normalize(metrics.volumeVariance, 0.02,  0.12);
-  // 声量が低い場合は抑揚スコアを補正（ノイズを抑揚として拾わないように）
+  let volume     = scoreVolume(metrics.avgVolume);
+  let intonation = normalize(metrics.volumeVariance, 0.02, 0.12);
+  // 声量が低い場合は抑揚補正（ノイズを抑揚として拾わないように）
   if (metrics.avgVolume < 0.02) intonation *= 0.4;
   let duration   = scoreDuration(durationRatio);
   const speakingRatio = 1 - metrics.silenceRatio;
 
-  // 基礎点を55に引き下げ
   let clarity = 55;
   if (speakingRatio > 0.55) clarity += 10;
   if (speakingRatio > 0.70) clarity += 8;
@@ -93,8 +112,10 @@ function calculateScores(metrics: AudioMetrics) {
   if (metrics.avgVolume < 0.025)      clarity -= 20;
   if (metrics.volumeVariance < 0.006) clarity -= 8;
 
-  let soul  = volume * 0.45 + intonation * 0.45 + duration * 0.1;
-  let chuni = intonation * 0.35 + volume * 0.45 + Math.random() * 10;
+  // 魂：抑揚・詠唱安定度・尺重視、声量は最小限
+  let soul  = intonation * 0.50 + clarity * 0.25 + duration * 0.15 + volume * 0.10;
+  // 厨二力：声量を直接入れず抑揚・尺・安定度で決まる
+  let chuni = intonation * 0.45 + duration * 0.25 + clarity * 0.20 + Math.random() * 10;
 
   volume     = clamp(volume,     0, 100);
   intonation = clamp(intonation, 0, 100);
@@ -104,21 +125,21 @@ function calculateScores(metrics: AudioMetrics) {
   chuni      = clamp(chuni,      0, 100);
 
   let score =
-    volume     * 0.22 +
-    intonation * 0.24 +
-    duration   * 0.18 +
-    clarity    * 0.18 +
-    soul       * 0.18;
+    volume     * 0.12 +
+    intonation * 0.30 +
+    duration   * 0.22 +
+    clarity    * 0.22 +
+    soul       * 0.14;
 
-  // 失敗補正（上限キャップ）
-  if (durationRatio < 0.5)            score = Math.min(score, 34);
-  if (metrics.silenceRatio > 0.45)    score = Math.min(score, 45);
-  if (metrics.avgVolume < 0.025)      score = Math.min(score, 30);
-  if (metrics.volumeVariance < 0.008) score = Math.min(score, 51);
+  // 失敗補正
+  if (durationRatio < 0.5)         score = Math.min(score, 34);
+  if (metrics.silenceRatio > 0.45) score = Math.min(score, 45);
 
-  // 抑揚不足による上限キャップ（棒読み対策）
-  if (intonation < 40) score = Math.min(score, 81); // 最大Bランク
-  if (intonation < 55) score = Math.min(score, 89); // 最大Aランク
+  // 声量・抑揚不足による上限キャップ
+  if (volume    < 20) score = Math.min(score, 51); // 上限D
+  if (volume    < 35) score = Math.min(score, 81); // 上限B
+  if (intonation < 40) score = Math.min(score, 81); // 上限B（棒読み対策）
+  if (intonation < 55) score = Math.min(score, 89); // 上限A
 
   score = clamp(score, 0, 100);
 
