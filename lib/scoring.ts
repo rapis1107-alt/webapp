@@ -37,12 +37,9 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function scoreDuration(ratio: number) {
-  if (ratio < 0.5)  return 15;
-  if (ratio < 0.7)  return 45;
-  if (ratio <= 1.25) return 90;
-  if (ratio <= 1.6)  return 65;
-  return 40;
+// 尺スコア：実際の発話時間（無音除く）/ 想定秒数 × 100（上限100）
+function scoreDuration(actualSpeakingTime: number, expectedSeconds: number): number {
+  return Math.min((actualSpeakingTime / expectedSeconds) * 100, 100);
 }
 
 interface RawScores {
@@ -92,13 +89,15 @@ function getRank(score: number, s: RawScores): keyof typeof titles {
 }
 
 function calculateScores(metrics: AudioMetrics) {
-  const durationRatio = metrics.duration / metrics.expectedSeconds;
+  // 実発話時間（無音除く）で尺を評価
+  const actualSpeakingTime = metrics.duration * (1 - metrics.silenceRatio);
+  const achievementRatio   = actualSpeakingTime / metrics.expectedSeconds;
 
   let volume     = scoreVolume(metrics.avgVolume);
   let intonation = normalize(metrics.volumeVariance, 0.02, 0.12);
   // 声量が低い場合は抑揚補正（ノイズを抑揚として拾わないように）
   if (metrics.avgVolume < 0.02) intonation *= 0.4;
-  let duration   = scoreDuration(durationRatio);
+  let duration   = scoreDuration(actualSpeakingTime, metrics.expectedSeconds);
   const speakingRatio = 1 - metrics.silenceRatio;
 
   let clarity = 55;
@@ -108,7 +107,7 @@ function calculateScores(metrics: AudioMetrics) {
   if (metrics.avgVolume > 0.08) clarity += 4;
   clarity -= metrics.longSilenceCount * 8;
   clarity -= metrics.veryLongSilenceCount * 15;
-  if (durationRatio < 0.6)            clarity -= 25;
+  if (achievementRatio < 0.6)         clarity -= 25;
   if (metrics.avgVolume < 0.025)      clarity -= 20;
   if (metrics.volumeVariance < 0.006) clarity -= 8;
 
@@ -131,13 +130,15 @@ function calculateScores(metrics: AudioMetrics) {
     clarity    * 0.22 +
     soul       * 0.14;
 
-  // 失敗補正
-  if (durationRatio < 0.5)         score = Math.min(score, 34);
-  if (metrics.silenceRatio > 0.45) score = Math.min(score, 45);
+  // 尺達成率によるキャップ
+  if (achievementRatio < 0.40) score = Math.min(score, 34); // 上限E
+  if (achievementRatio < 0.60) score = Math.min(score, 51); // 上限D
+  if (achievementRatio < 0.75) score = Math.min(score, 67); // 上限C
+  if (achievementRatio < 0.90) score = Math.min(score, 81); // 上限B
 
-  // 声量・抑揚不足による上限キャップ
-  if (volume    < 20) score = Math.min(score, 51); // 上限D
-  if (volume    < 35) score = Math.min(score, 81); // 上限B
+  // 声量・抑揚不足によるキャップ
+  if (volume     < 20) score = Math.min(score, 51); // 上限D
+  if (volume     < 35) score = Math.min(score, 81); // 上限B
   if (intonation < 40) score = Math.min(score, 81); // 上限B（棒読み対策）
   if (intonation < 55) score = Math.min(score, 89); // 上限A
 

@@ -9,7 +9,7 @@ import { gtagEvent } from "../lib/gtag";
 
 type Screen = "top" | "permission" | "countdown" | "recording" | "analyzing" | "result" | "error";
 
-const RECORD_MAX = 10000;
+const RECORD_BUFFER_MS = 6000; // 想定秒数 + 6秒のバッファ
 const SILENCE_THRESHOLD = 0.005;
 
 const DIFFICULTY_LABEL: Record<Difficulty, string> = {
@@ -109,7 +109,7 @@ export default function Home() {
     }, 2200);
   };
 
-  const startRecording = async (c: Chant) => {
+  const startRecording = async (c: Chant, recordMax = c.expectedSeconds * 1000 + RECORD_BUFFER_MS) => {
     volumeSamplesRef.current = [];
     pitchSamplesRef.current  = [];
 
@@ -159,7 +159,7 @@ export default function Home() {
         }
         pitchSamplesRef.current.push(count > 0 ? sum / count : 0);
 
-        if (elapsed >= RECORD_MAX) stopRecording();
+        if (elapsed >= recordMax) stopRecording();
       }, 100);
     } catch {
       stream.getTracks().forEach((t) => t.stop());
@@ -215,7 +215,7 @@ export default function Home() {
         )}
         {screen === "countdown" && chant && <CountdownScreen chant={chant} count={countdown} />}
         {screen === "recording" && chant && (
-          <RecordingScreen chant={chant} elapsed={recordMs} onStop={stopRecording} />
+          <RecordingScreen chant={chant} elapsed={recordMs} recordMax={chant.expectedSeconds * 1000 + RECORD_BUFFER_MS} onStop={stopRecording} />
         )}
         {screen === "analyzing" && <AnalyzingScreen />}
         {screen === "result" && result && chant && (
@@ -390,9 +390,9 @@ function CountdownScreen({ chant, count }: { chant: Chant; count: number }) {
 
 // ─── RecordingScreen ──────────────────────────────────────────────────────────
 
-function RecordingScreen({ chant, elapsed, onStop }: { chant: Chant; elapsed: number; onStop: () => void }) {
-  const pct       = Math.min(100, (elapsed / RECORD_MAX) * 100);
-  const remaining = Math.max(0, Math.ceil((RECORD_MAX - elapsed) / 1000));
+function RecordingScreen({ chant, elapsed, recordMax, onStop }: { chant: Chant; elapsed: number; recordMax: number; onStop: () => void }) {
+  const pct       = Math.min(100, (elapsed / recordMax) * 100);
+  const remaining = Math.max(0, Math.ceil((recordMax - elapsed) / 1000));
 
   return (
     <div className="flex flex-col items-center gap-6 text-center z-10 max-w-sm w-full">
