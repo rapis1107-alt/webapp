@@ -457,68 +457,6 @@ function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => voi
   );
 }
 
-// ─── FailureDisplay ───────────────────────────────────────────────────────────
-
-function FailureDisplay({ rank }: { rank: string }) {
-  const isE = rank === "E";
-  const label = isE ? "魔力反応なし" : "詠唱失敗";
-  const sub   = isE ? "Black flame rejected your soul." : "The spell dissolved into silence.";
-
-  return (
-    <div className="relative flex flex-col items-center gap-4 py-2">
-      {/* 壊れた魔法陣 */}
-      <div style={{ filter: "grayscale(1)", opacity: 0.25 }}>
-        <MagicCircle size={160} />
-      </div>
-
-      {/* ひび割れSVG */}
-      <svg
-        width="160" height="160"
-        viewBox="0 0 160 160"
-        className="absolute top-0 left-1/2"
-        style={{ transform: "translateX(-50%)", animation: "crack-flash 2s ease-in-out infinite" }}
-      >
-        <g stroke="#cc1a1a" strokeWidth="1.5" fill="none" opacity="0.8">
-          <polyline points="80,30 70,60 85,58 68,100" />
-          <polyline points="80,30 95,55 82,60 100,95" />
-          <polyline points="40,70 60,78 50,95" />
-          <polyline points="120,65 105,75 115,92" />
-        </g>
-      </svg>
-
-      {/* 煙エフェクト */}
-      <div
-        className="absolute"
-        style={{
-          bottom: 40,
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: 60,
-          height: 40,
-          borderRadius: "50%",
-          background: "radial-gradient(ellipse, #44225588 0%, transparent 70%)",
-          animation: "smoke-rise 2.4s ease-out infinite",
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* 失敗ラベル */}
-      <div style={{ animation: "stamp-in 0.5s cubic-bezier(.22,.8,.35,1) forwards" }}>
-        <p
-          className="text-xl font-bold tracking-widest"
-          style={{
-            color: "#cc1a1a",
-            textShadow: "0 0 16px #cc1a1a",
-            animation: "shake 0.5s ease-in-out 0.6s 1",
-          }}
-        >
-          {label}
-        </p>
-        <p className="text-xs opacity-30 mt-1">{sub}</p>
-      </div>
-    </div>
-  );
-}
 
 // ─── ScoreBar ─────────────────────────────────────────────────────────────────
 
@@ -589,7 +527,6 @@ function ResultScreen({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastTauntRef = useRef<string>("");
-  const isFailure = result.rank === "E" || result.rank === "D";
 
   const rankColor =
     result.rank === "EX" ? "#d4a017" :
@@ -656,14 +593,10 @@ function ResultScreen({
         </div>
       </div>
 
-      {/* 失敗演出 or 成功の魔法陣 */}
-      {isFailure ? (
-        <FailureDisplay rank={result.rank} />
-      ) : (
-        <div style={{ filter: `drop-shadow(0 0 24px ${rankColor}cc)` }}>
-          <MagicCircle size={160} color={rankColor} />
-        </div>
-      )}
+      {/* 魔法陣 */}
+      <div style={{ filter: `drop-shadow(0 0 24px ${rankColor}cc)` }}>
+        <MagicCircle size={160} color={rankColor} />
+      </div>
 
       {/* ランク + スコア */}
       <div className="space-y-1">
