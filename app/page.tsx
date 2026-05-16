@@ -46,7 +46,7 @@ export default function Home() {
   const pitchSamplesRef  = useRef<number[]>([]);
   const lastChantIdRef   = useRef<string | undefined>(undefined);
 
-  const stopRecording = () => {
+  const stopRecording = (userCompleted = false) => {
     if (recordTimerRef.current) {
       clearInterval(recordTimerRef.current);
       recordTimerRef.current = null;
@@ -97,11 +97,13 @@ export default function Home() {
       void pitches; // pitchSamples は将来の拡張用
 
       const expectedSeconds = chant?.expectedSeconds ?? 8;
+      const difficulty = chant?.difficulty ?? "normal";
       const score = calcScore({
         duration, expectedSeconds,
         avgVolume, maxVolume,
         volumeVariance, silenceRatio,
         longSilenceCount, veryLongSilenceCount,
+        difficulty, userCompleted,
       });
       setResult(score);
       setScreen("result");
@@ -159,7 +161,7 @@ export default function Home() {
         }
         pitchSamplesRef.current.push(count > 0 ? sum / count : 0);
 
-        if (elapsed >= recordMax) stopRecording();
+        if (elapsed >= recordMax) stopRecording(false);
       }, 100);
     } catch {
       stream.getTracks().forEach((t) => t.stop());
@@ -215,7 +217,7 @@ export default function Home() {
         )}
         {screen === "countdown" && chant && <CountdownScreen chant={chant} count={countdown} />}
         {screen === "recording" && chant && (
-          <RecordingScreen chant={chant} elapsed={recordMs} recordMax={chant.expectedSeconds * 1000 + RECORD_BUFFER_MS} onStop={stopRecording} />
+          <RecordingScreen chant={chant} elapsed={recordMs} recordMax={chant.expectedSeconds * 1000 + RECORD_BUFFER_MS} onStop={() => stopRecording(true)} />
         )}
         {screen === "analyzing" && <AnalyzingScreen />}
         {screen === "result" && result && chant && (
@@ -697,6 +699,30 @@ function ResultScreen({
         <ScoreBar label="魂"     value={result.soul}       color="#cc1a1a" comment={result.soulComment} />
         <ScoreBar label="厨二力" value={result.chuni}      color="#d4a017" />
       </div>
+
+      {/* EXPERT 禁術級認定条件 */}
+      {result.difficulty === "expert" && (
+        <div className="w-full rounded-xl p-4 space-y-2" style={{ border: "1px solid #7c3aed66", background: "#1a002288" }}>
+          <p className="text-xs font-bold tracking-widest text-center mb-3" style={{ color: "#d4a017" }}>
+            ── 禁術級認定条件 ──
+          </p>
+          {[
+            { label: "詠唱完了ボタンで終了", met: result.userCompleted },
+            { label: `尺達成率 95%以上（現在 ${Math.round(result.achievementRatio * 100)}%）`, met: result.achievementRatio >= 0.95 },
+            { label: `抑揚 85以上（現在 ${result.intonation}）`, met: result.intonation >= 85 },
+            { label: `詠唱安定度 85以上（現在 ${result.clarity}）`, met: result.clarity >= 85 },
+            { label: `声量 50以上（現在 ${result.volume}）`, met: result.volume >= 50 },
+          ].map(({ label, met }) => (
+            <div key={label} className="flex items-center gap-2 text-xs">
+              <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
+              <span style={{ color: met ? "#86efac" : "#fca5a5" }}>{label}</span>
+            </div>
+          ))}
+          {result.rank === "EX" && (
+            <p className="text-xs text-center mt-2 font-bold" style={{ color: "#d4a017" }}>禁術級認定済み</p>
+          )}
+        </div>
+      )}
 
       {/* ボタン */}
       <div className="flex flex-col gap-3 w-full mt-2">

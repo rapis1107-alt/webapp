@@ -1,6 +1,8 @@
 import { titles, createResultText } from "../data/titles";
 import { getMetricComment } from "../data/comments";
 
+export type Difficulty = "easy" | "normal" | "hard" | "expert";
+
 export interface AudioMetrics {
   duration: number;
   expectedSeconds: number;
@@ -10,6 +12,8 @@ export interface AudioMetrics {
   silenceRatio: number;
   longSilenceCount: number;      // 0.8s〜1.5s の無音区間数
   veryLongSilenceCount: number;  // 1.5s 以上の無音区間数
+  difficulty: Difficulty;
+  userCompleted: boolean;        // true = ボタン押下, false = タイムアウト
 }
 
 export interface ScoreResult {
@@ -27,6 +31,9 @@ export interface ScoreResult {
   intonationComment: string;
   clarityComment: string;
   soulComment: string;
+  achievementRatio: number;
+  userCompleted: boolean;
+  difficulty: Difficulty;
 }
 
 function normalize(value: number, min: number, max: number) {
@@ -37,9 +44,15 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-// 尺スコア：実際の発話時間（無音除く）/ 想定秒数 × 100（上限100）
+// 尺スコア：達成率に応じた段階的スコア
+// 速く読んでも達成率が高ければ高得点、途中終了は厳しく落とす
 function scoreDuration(actualSpeakingTime: number, expectedSeconds: number): number {
-  return Math.min((actualSpeakingTime / expectedSeconds) * 100, 100);
+  const rate = actualSpeakingTime / expectedSeconds;
+  if (rate < 0.40) return (rate / 0.40) * 20;
+  if (rate < 0.60) return 20 + ((rate - 0.40) / 0.20) * 25;
+  if (rate < 0.75) return 45 + ((rate - 0.60) / 0.15) * 20;
+  if (rate < 0.90) return 65 + ((rate - 0.75) / 0.15) * 20;
+  return Math.min(90 + ((rate - 0.90) / 0.10) * 10, 100);
 }
 
 interface RawScores {
@@ -49,14 +62,14 @@ interface RawScores {
   clarity: number;
 }
 
-// 声量を非線形スコアに変換（普通読みで50〜70、本気で80〜90に収まるよう設計）
+// 声量を非線形スコアに変換（普通読みで60〜75、本気で85〜95に収まるよう設計）
 function scoreVolume(avgVolume: number): number {
   const points: [number, number][] = [
-    [0.006, 0],
-    [0.02,  50],
-    [0.04,  70],
-    [0.06,  85],
-    [0.075, 100],
+    [0.008, 0],
+    [0.02,  45],
+    [0.04,  65],
+    [0.07,  85],
+    [0.12,  100],
   ];
   if (avgVolume <= points[0][0]) return points[0][1];
   if (avgVolume >= points[points.length - 1][0]) return points[points.length - 1][1];
@@ -70,7 +83,13 @@ function scoreVolume(avgVolume: number): number {
   return 100;
 }
 
-function getRank(score: number, s: RawScores): keyof typeof titles {
+function getRank(
+  score: number,
+  s: RawScores,
+  achievementRatio: number,
+  difficulty: Difficulty,
+  userCompleted: boolean,
+): keyof typeof titles {
   let rank: keyof typeof titles;
   if      (score >= 96) rank = "EX";
   else if (score >= 90) rank = "S";
@@ -80,8 +99,19 @@ function getRank(score: number, s: RawScores): keyof typeof titles {
   else if (score >= 35) rank = "D";
   else                  rank = "E";
 
-  // 上位ランクの最低条件チェック（声量条件を緩和・抑揚重視に変更）
+  // 共通EX条件
   if (rank === "EX" && !(s.intonation >= 88 && s.duration >= 90 && s.clarity >= 88 && s.volume >= 55)) rank = "S";
+  // EXPERT専用EX条件（禁術級認定）
+  if (rank === "EX" && difficulty === "expert") {
+    const expertEx =
+      userCompleted &&
+      achievementRatio >= 0.95 &&
+      s.intonation >= 85 &&
+      s.clarity >= 85 &&
+      s.volume >= 50;
+    if (!expertEx) rank = "S";
+  }
+
   if (rank === "S"  && !(s.intonation >= 75 && s.duration >= 80 && s.clarity >= 80 && s.volume >= 45)) rank = "A";
   if (rank === "A"  && !(s.intonation >= 55 && s.duration >= 70 && s.clarity >= 70 && s.volume >= 35)) rank = "B";
 
@@ -100,16 +130,22 @@ function calculateScores(metrics: AudioMetrics) {
   let duration   = scoreDuration(actualSpeakingTime, metrics.expectedSeconds);
   const speakingRatio = 1 - metrics.silenceRatio;
 
-  let clarity = 55;
-  if (speakingRatio > 0.55) clarity += 10;
-  if (speakingRatio > 0.70) clarity += 8;
-  if (metrics.avgVolume > 0.04) clarity += 6;
-  if (metrics.avgVolume > 0.08) clarity += 4;
+  // 詠唱安定度：発話の滑らかさを測る。速さ・声量は評価しない
+  // 「無音が少なく最後まで続いた」かどうかを見る
+  let clarity = 60;
+
+  // 発話継続ボーナス（speakingRatioベース。速さ無関係）
+  if (speakingRatio >= 0.80) clarity += 30;
+  else if (speakingRatio >= 0.70) clarity += 20;
+  else if (speakingRatio >= 0.60) clarity += 10;
+  else if (speakingRatio >= 0.50) clarity += 5;
+
+  // 長い無音区間ペナルティ（途中で止まった・詰まった）
   clarity -= metrics.longSilenceCount * 8;
   clarity -= metrics.veryLongSilenceCount * 15;
-  if (achievementRatio < 0.6)         clarity -= 25;
-  if (metrics.avgVolume < 0.025)      clarity -= 20;
-  if (metrics.volumeVariance < 0.006) clarity -= 8;
+
+  // 極端な音量の乱れのみペナルティ（通常の抑揚は減点しない）
+  if (metrics.volumeVariance > 0.09) clarity -= 10;
 
   // 魂：抑揚・詠唱安定度・尺重視、声量は最小限
   let soul  = intonation * 0.50 + clarity * 0.25 + duration * 0.15 + volume * 0.10;
@@ -156,7 +192,10 @@ function calculateScores(metrics: AudioMetrics) {
     soul:  Math.round(soul),
     chuni: Math.round(chuni),
     score: Math.round(score),
-    rank:  getRank(score, raw),
+    rank:  getRank(score, raw, achievementRatio, metrics.difficulty, metrics.userCompleted),
+    achievementRatio,
+    userCompleted: metrics.userCompleted,
+    difficulty: metrics.difficulty,
   };
 }
 
