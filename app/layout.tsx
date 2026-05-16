@@ -14,6 +14,9 @@ export const metadata: Metadata = {
     canonical: SITE_URL,
   },
   keywords: ["詠唱力診断", "詠唱", "呪文", "厨二病", "魔法", "声診断", "マイク", "ランク", "ゲーム"],
+  verification: {
+    google: "yHQnpytQhJ_pmZswaEE_ZVvqTdr2A3QpF_yh_gdvL08",
+  },
   openGraph: {
     title: "詠唱力診断",
     description: "マイクに向かって呪文を詠唱し、声量・抑揚・魂をAIが診断。あなたの詠唱ランクはEからEXまで。",
