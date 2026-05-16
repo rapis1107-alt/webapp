@@ -92,7 +92,7 @@ export default function AboutPage() {
               { rank: "A",  color: "#cc1a1a", desc: "高い詠唱力を持つ上位ランク" },
               { rank: "B",  color: "#9333ea", desc: "平均以上の詠唱力を持つランク" },
               { rank: "C",  color: "#6b21a8", desc: "基本的な詠唱力を持つランク" },
-              { rank: "D",  color: "#666",    desc: "詠唱失敗。もう一度挑戦せよ" },
+              { rank: "D",  color: "#666",    desc: "魔力が届きにくい。もう一度挑戦せよ" },
               { rank: "E",  color: "#444",    desc: "魔力反応なし。声が届かなかった" },
             ].map(({ rank, color, desc }) => (
               <div key={rank} className="flex items-center gap-3">
