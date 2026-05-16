@@ -74,8 +74,10 @@ function getRank(score: number, s: RawScores): keyof typeof titles {
 function calculateScores(metrics: AudioMetrics) {
   const durationRatio = metrics.duration / metrics.expectedSeconds;
 
-  let volume     = normalize(metrics.avgVolume,       0.02,  0.18);
-  let intonation = normalize(metrics.volumeVariance,  0.005, 0.08);
+  let volume     = normalize(metrics.avgVolume,      0.01,  0.10);
+  let intonation = normalize(metrics.volumeVariance, 0.02,  0.12);
+  // 声量が低い場合は抑揚スコアを補正（ノイズを抑揚として拾わないように）
+  if (metrics.avgVolume < 0.02) intonation *= 0.4;
   let duration   = scoreDuration(durationRatio);
   const speakingRatio = 1 - metrics.silenceRatio;
 
@@ -92,7 +94,7 @@ function calculateScores(metrics: AudioMetrics) {
   if (metrics.volumeVariance < 0.006) clarity -= 8;
 
   let soul  = volume * 0.45 + intonation * 0.45 + duration * 0.1;
-  let chuni = intonation * 0.5 + volume * 0.3 + Math.random() * 20;
+  let chuni = intonation * 0.35 + volume * 0.45 + Math.random() * 10;
 
   volume     = clamp(volume,     0, 100);
   intonation = clamp(intonation, 0, 100);
