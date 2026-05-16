@@ -9,7 +9,9 @@ import { gtagEvent } from "../lib/gtag";
 
 type Screen = "top" | "permission" | "countdown" | "recording" | "analyzing" | "result" | "error";
 
-const RECORD_BUFFER_MS = 6000; // 想定秒数 + 6秒のバッファ
+const RECORD_BUFFER_MS: Record<Difficulty, number> = {
+  easy: 3000, normal: 4000, hard: 5000, expert: 6000,
+};
 const SILENCE_THRESHOLD = 0.005;
 
 const DIFFICULTY_LABEL: Record<Difficulty, string> = {
@@ -111,7 +113,7 @@ export default function Home() {
     }, 2200);
   };
 
-  const startRecording = async (c: Chant, recordMax = c.expectedSeconds * 1000 + RECORD_BUFFER_MS) => {
+  const startRecording = async (c: Chant, recordMax = c.expectedSeconds * 1000 + RECORD_BUFFER_MS[c.difficulty]) => {
     volumeSamplesRef.current = [];
     pitchSamplesRef.current  = [];
 
@@ -217,7 +219,7 @@ export default function Home() {
         )}
         {screen === "countdown" && chant && <CountdownScreen chant={chant} count={countdown} />}
         {screen === "recording" && chant && (
-          <RecordingScreen chant={chant} elapsed={recordMs} recordMax={chant.expectedSeconds * 1000 + RECORD_BUFFER_MS} onStop={() => stopRecording(true)} />
+          <RecordingScreen chant={chant} elapsed={recordMs} recordMax={chant.expectedSeconds * 1000 + RECORD_BUFFER_MS[chant.difficulty]} onStop={() => stopRecording(true)} />
         )}
         {screen === "analyzing" && <AnalyzingScreen />}
         {screen === "result" && result && chant && (
