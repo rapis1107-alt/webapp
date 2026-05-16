@@ -62,14 +62,15 @@ interface RawScores {
   clarity: number;
 }
 
-// 声量を非線形スコアに変換（普通読みで60〜75、本気で85〜95に収まるよう設計）
+// 声量を非線形スコアに変換（普通読みで50〜65、本気で70〜85に収まるよう設計）
 function scoreVolume(avgVolume: number): number {
   const points: [number, number][] = [
-    [0.008, 0],
-    [0.02,  45],
-    [0.04,  65],
-    [0.07,  85],
-    [0.12,  100],
+    [0.012, 0],
+    [0.025, 45],
+    [0.045, 60],
+    [0.075, 75],
+    [0.11,  88],
+    [0.16,  100],
   ];
   if (avgVolume <= points[0][0]) return points[0][1];
   if (avgVolume >= points[points.length - 1][0]) return points[points.length - 1][1];
