@@ -567,24 +567,33 @@ function ResultScreen({
     if (canvas) drawResultCanvas(canvas, result, chant.title);
   }, []);
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     gtagEvent("share_click");
 
     const shareText = buildShareText();
     const twitterWebUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    if (isMobile) {
-      const appUrl = `twitter://post?message=${encodeURIComponent(shareText)}`;
-      window.location.href = appUrl;
-      setTimeout(() => {
-        if (!document.hidden) window.open(twitterWebUrl, "_blank");
-      }, 1500);
-    } else {
-      window.open(twitterWebUrl, "_blank");
+    // 画像付きシェア：Web Share API（iOS/Android）
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/png")
+    );
+    if (blob) {
+      const file = new File([blob], "詠唱力診断結果.png", { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], text: shareText });
+          return;
+        } catch {
+          // キャンセル時はフォールバックせず終了
+          return;
+        }
+      }
     }
+
+    // Web Share API 非対応（PC等）：テキストのみでX投稿ページを開く
+    window.open(twitterWebUrl, "_blank");
   };
 
   const handleSaveImage = () => {
@@ -676,13 +685,12 @@ function ResultScreen({
 
       {/* ボタン */}
       <div className="flex flex-col gap-3 w-full mt-2">
-        <p className="text-xs opacity-40 text-center">画像も投稿したい場合は先に「画像保存」を</p>
         <button
           onClick={handleShare}
           className="w-full py-3 rounded-full font-bold tracking-widest cursor-pointer text-sm"
           style={{ background: "#000", color: "#fff", border: "1px solid #333" }}
         >
-          𝕏 で結果をシェア
+          𝕏 で結果をシェア（画像付き）
         </button>
         <button
           onClick={handleSaveImage}
