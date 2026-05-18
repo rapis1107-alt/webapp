@@ -7,13 +7,11 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const rank      = searchParams.get("r")  || "E";
   const score     = searchParams.get("s")  || "0";
-  const title     = searchParams.get("t")  || "";
   const volume    = Number(searchParams.get("v")  || 0);
   const intonation= Number(searchParams.get("i")  || 0);
   const clarity   = Number(searchParams.get("c")  || 0);
   const soul      = Number(searchParams.get("so") || 0);
   const chuni     = Number(searchParams.get("ch") || 0);
-  const chantTitle= searchParams.get("ct") || "";
 
   const rankColor =
     rank === "EX" ? "#d4a017" :
@@ -56,13 +54,6 @@ export async function GET(req: NextRequest) {
         <div style={{ fontSize: 18, color: "#e8e0f055", letterSpacing: "0.3em", marginBottom: 12, display: "flex" }}>
           詠唱力診断
         </div>
-
-        {/* 詠唱名 */}
-        {chantTitle && (
-          <div style={{ fontSize: 15, color: "#e8e0f044", marginBottom: 20, display: "flex" }}>
-            詠唱：{chantTitle}
-          </div>
-        )}
 
         {/* ランク */}
         <div style={{

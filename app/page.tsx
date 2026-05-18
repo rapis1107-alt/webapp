@@ -218,7 +218,7 @@ export default function Home() {
             <p className="text-2xl">⚠️</p>
             <p className="font-bold text-base" style={{ color: "#d4a017" }}>外部ブラウザで開いてください</p>
             <p className="text-sm opacity-70 leading-relaxed">
-              Xアプリ内のブラウザではマイクが使用できないため、録音機能が動作しません。
+              Xアプリ内のブラウザでは診断後の「Xでシェア」「画像保存」ボタンが動作しません。
             </p>
             <div className="rounded-xl p-3 text-xs opacity-60 leading-relaxed" style={{ background: "#0a0008" }}>
               <p className="font-bold mb-1" style={{ color: "#9333ea" }}>開き方</p>
@@ -562,15 +562,8 @@ function ResultScreen({
     result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
 
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://webapp-6bdo.vercel.app";
-  const buildResultUrl = () => {
-    const params = new URLSearchParams({
-      r: result.rank, s: String(result.score), t: result.title,
-      v: String(result.volume), i: String(result.intonation),
-      c: String(result.clarity), so: String(result.soul),
-      ch: String(result.chuni), ct: chant.title,
-    });
-    return `${siteUrl}/result?${params.toString()}`;
-  };
+  const buildResultUrl = () =>
+    `${siteUrl}/result?r=${result.rank}&s=${result.score}&v=${result.volume}&i=${result.intonation}&c=${result.clarity}&so=${result.soul}&ch=${result.chuni}`;
   const buildShareText = () => {
     const taunt = pickTaunt(lastTauntRef.current);
     lastTauntRef.current = taunt;
