@@ -222,7 +222,7 @@ export default function Home() {
             </p>
             <div className="rounded-xl p-3 text-xs opacity-60 leading-relaxed" style={{ background: "#0a0008" }}>
               <p className="font-bold mb-1" style={{ color: "#9333ea" }}>開き方</p>
-              <p>画面右上の <span className="font-bold">…</span> メニュー →<br />「<span className="font-bold">ブラウザで開く</span>（SafariまたはChrome）」</p>
+              <p>画面下部の <span className="font-bold">「vercel.app」</span> をタップ<br />→「<span className="font-bold">ブラウザで開く</span>」を選択</p>
             </div>
           </div>
         </div>
@@ -567,34 +567,24 @@ function ResultScreen({
     if (canvas) drawResultCanvas(canvas, result, chant.title);
   }, []);
 
-  const handleShare = async () => {
+  const handleShare = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     gtagEvent("share_click");
 
     const shareText = buildShareText();
     const twitterWebUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    // Canvas → Blob
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/png")
-    );
-
-    // Web Share API で画像ごとシェア（iOS Safari / Android Chrome 対応）
-    if (blob && navigator.canShare) {
-      const file = new File([blob], "詠唱力診断結果.png", { type: "image/png" });
-      if (navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], text: shareText });
-          return;
-        } catch {
-          // ユーザーキャンセルまたは非対応 → フォールバック
-        }
-      }
+    if (isMobile) {
+      const appUrl = `twitter://post?message=${encodeURIComponent(shareText)}`;
+      window.location.href = appUrl;
+      setTimeout(() => {
+        if (!document.hidden) window.open(twitterWebUrl, "_blank");
+      }, 1500);
+    } else {
+      window.open(twitterWebUrl, "_blank");
     }
-
-    // フォールバック: テキストのみでX投稿ページを開く
-    window.open(twitterWebUrl, "_blank");
   };
 
   const handleSaveImage = () => {
@@ -686,6 +676,7 @@ function ResultScreen({
 
       {/* ボタン */}
       <div className="flex flex-col gap-3 w-full mt-2">
+        <p className="text-xs opacity-40 text-center">画像も投稿したい場合は先に「画像保存」を</p>
         <button
           onClick={handleShare}
           className="w-full py-3 rounded-full font-bold tracking-widest cursor-pointer text-sm"
