@@ -581,25 +581,27 @@ function ResultScreen({
 
     const shareText = buildShareText();
     const twitterWebUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    // 画像付きシェア：Web Share API（iOS/Android）
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/png")
-    );
-    if (blob) {
-      const file = new File([blob], "詠唱力診断結果.png", { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], text: shareText });
-          return;
-        } catch {
-          // キャンセル時はフォールバックせず終了
-          return;
+    if (isMobile) {
+      // モバイル：Web Share API で画像付きシェア
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png")
+      );
+      if (blob) {
+        const file = new File([blob], "詠唱力診断結果.png", { type: "image/png" });
+        if (navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], text: shareText });
+            return;
+          } catch {
+            return;
+          }
         }
       }
     }
 
-    // Web Share API 非対応（PC等）：テキストのみでX投稿ページを開く
+    // PC・フォールバック：Xを直接開く（テキストのみ）
     window.open(twitterWebUrl, "_blank");
   };
 
