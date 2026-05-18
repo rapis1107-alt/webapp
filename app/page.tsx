@@ -198,6 +198,11 @@ export default function Home() {
     setScreen("top");
   };
 
+  const [isXInAppBrowser, setIsXInAppBrowser] = useState(false);
+  useEffect(() => {
+    setIsXInAppBrowser(/Twitter/i.test(navigator.userAgent));
+  }, []);
+
   return (
     <main className="min-h-dvh flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none" style={{
@@ -206,6 +211,22 @@ export default function Home() {
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none magic-circle-bg">
         <MagicCircle size={700} />
       </div>
+
+      {isXInAppBrowser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ background: "#0a000899", backdropFilter: "blur(6px)" }}>
+          <div className="w-full max-w-sm rounded-2xl p-6 space-y-4 text-center" style={{ background: "#1a0028", border: "1px solid #6b21a8" }}>
+            <p className="text-2xl">⚠️</p>
+            <p className="font-bold text-base" style={{ color: "#d4a017" }}>外部ブラウザで開いてください</p>
+            <p className="text-sm opacity-70 leading-relaxed">
+              Xアプリ内のブラウザではマイクが使用できないため、録音機能が動作しません。
+            </p>
+            <div className="rounded-xl p-3 text-xs opacity-60 leading-relaxed" style={{ background: "#0a0008" }}>
+              <p className="font-bold mb-1" style={{ color: "#9333ea" }}>開き方</p>
+              <p>画面右上の <span className="font-bold">…</span> メニュー →<br />「<span className="font-bold">ブラウザで開く</span>（SafariまたはChrome）」</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="relative z-10 flex flex-col items-center w-full">
         {screen === "top" && <TopScreen onStart={handleStart} />}
@@ -546,28 +567,34 @@ function ResultScreen({
     if (canvas) drawResultCanvas(canvas, result, chant.title);
   }, []);
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     gtagEvent("share_click");
 
     const shareText = buildShareText();
     const twitterWebUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    if (isMobile) {
-      // スマホ: X アプリを直接起動、アプリが開いたら document.hidden になるのでフォールバックしない
-      const appUrl = `twitter://post?message=${encodeURIComponent(shareText)}`;
-      window.location.href = appUrl;
-      setTimeout(() => {
-        if (!document.hidden) {
-          window.open(twitterWebUrl, "_blank");
+    // Canvas → Blob
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/png")
+    );
+
+    // Web Share API で画像ごとシェア（iOS Safari / Android Chrome 対応）
+    if (blob && navigator.canShare) {
+      const file = new File([blob], "詠唱力診断結果.png", { type: "image/png" });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], text: shareText });
+          return;
+        } catch {
+          // ユーザーキャンセルまたは非対応 → フォールバック
         }
-      }, 1500);
-    } else {
-      // PC: X を直接開く
-      window.open(twitterWebUrl, "_blank");
+      }
     }
+
+    // フォールバック: テキストのみでX投稿ページを開く
+    window.open(twitterWebUrl, "_blank");
   };
 
   const handleSaveImage = () => {
