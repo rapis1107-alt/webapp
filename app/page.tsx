@@ -216,13 +216,35 @@ export default function Home() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ background: "#0a000899", backdropFilter: "blur(6px)" }}>
           <div className="w-full max-w-sm rounded-2xl p-6 space-y-4 text-center" style={{ background: "#1a0028", border: "1px solid #6b21a8" }}>
             <p className="text-2xl">⚠️</p>
-            <p className="font-bold text-base" style={{ color: "#d4a017" }}>外部ブラウザで開いてください</p>
+            <p className="font-bold text-base" style={{ color: "#d4a017" }}>ブラウザで開いてください</p>
             <p className="text-sm opacity-70 leading-relaxed">
-              Xアプリ内のブラウザでは診断後の「Xでシェア」「画像保存」ボタンが動作しません。
+              このままでは診断後に結果をXへシェアしたり、画像を保存することができません。
             </p>
-            <div className="rounded-xl p-3 text-xs opacity-60 leading-relaxed" style={{ background: "#0a0008" }}>
-              <p className="font-bold mb-1" style={{ color: "#9333ea" }}>開き方</p>
-              <p>画面下部の <span className="font-bold">「vercel.app」</span> をタップ<br />→「<span className="font-bold">ブラウザで開く</span>」を選択</p>
+            <button
+              onClick={() => {
+                const ua = navigator.userAgent;
+                if (/Android/i.test(ua)) {
+                  // Android: Chromeで強制的に開く
+                  const intentUrl = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`;
+                  window.location.href = intentUrl;
+                } else {
+                  // iOS: target="_blank" でSafari脱出を試みる
+                  const a = document.createElement("a");
+                  a.href = window.location.href;
+                  a.target = "_blank";
+                  a.rel = "noopener noreferrer";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                }
+              }}
+              className="w-full py-3 rounded-full font-bold text-sm cursor-pointer"
+              style={{ background: "linear-gradient(135deg, #6b21a8, #cc1a1a)", color: "#e8e0f0" }}
+            >
+              ブラウザで開く
+            </button>
+            <div className="rounded-xl p-3 text-xs opacity-50 leading-relaxed" style={{ background: "#0a0008" }}>
+              <p>うまく開かない場合は<br />画面下部の <span className="font-bold">「vercel.app」</span> をタップ<br />→「<span className="font-bold">ブラウザで開く</span>」</p>
             </div>
             <button
               onClick={() => setIsXInAppBrowser(false)}
