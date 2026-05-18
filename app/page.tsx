@@ -221,7 +221,7 @@ export default function Home() {
               このままでは診断後に結果をXへシェアしたり、画像を保存することができません。
             </p>
             <div className="rounded-xl p-4 text-sm leading-relaxed space-y-1" style={{ background: "#0a0008", border: "1px solid #6b21a833" }}>
-              <p className="font-bold mb-2" style={{ color: "#9333ea" }}>開き方</p>
+              <p className="font-bold mb-2" style={{ color: "#9333ea" }}>自動で開かない場合</p>
               <p>画面下部の <span className="font-bold text-white">「vercel.app」</span> をタップ</p>
               <p style={{ color: "#9333ea" }}>↓</p>
               <p><span className="font-bold text-white">「ブラウザで開く」</span> を選択</p>
