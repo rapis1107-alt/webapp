@@ -561,11 +561,20 @@ function ResultScreen({
     result.rank === "S"  ? "#ff6a00" :
     result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
 
-  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://webapp-6bdo.vercel.app";
+  const buildResultUrl = () => {
+    const params = new URLSearchParams({
+      r: result.rank, s: String(result.score), t: result.title,
+      v: String(result.volume), i: String(result.intonation),
+      c: String(result.clarity), so: String(result.soul),
+      ch: String(result.chuni), ct: chant.title,
+    });
+    return `${siteUrl}/result?${params.toString()}`;
+  };
   const buildShareText = () => {
     const taunt = pickTaunt(lastTauntRef.current);
     lastTauntRef.current = taunt;
-    return `【詠唱力診断】\n\n我が称号は『${result.title}』\n魔導ランク：${result.rank}\n総合詠唱力：${result.score}点\n\n声量 ${result.volume} / 抑揚 ${result.intonation} / 詠唱安定度 ${result.clarity} / 魂 ${result.soul} / 厨二力 ${result.chuni}\n\n${taunt}\n\n${siteUrl}\n#詠唱力診断`;
+    return `【詠唱力診断】\n\n我が称号は『${result.title}』\n魔導ランク：${result.rank}\n総合詠唱力：${result.score}点\n\n声量 ${result.volume} / 抑揚 ${result.intonation} / 詠唱安定度 ${result.clarity} / 魂 ${result.soul} / 厨二力 ${result.chuni}\n\n${taunt}\n\n${buildResultUrl()}\n#詠唱力診断`;
   };
 
   // 結果表示と同時にキャンバスを事前描画（ボタン押下時に非同期処理が不要になりポップアップブロックを回避）
@@ -574,35 +583,20 @@ function ResultScreen({
     if (canvas) drawResultCanvas(canvas, result, chant.title);
   }, []);
 
-  const handleShare = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleShare = () => {
     gtagEvent("share_click");
-
     const shareText = buildShareText();
     const twitterWebUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
     if (isMobile) {
-      // モバイル：Web Share API で画像付きシェア
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png")
-      );
-      if (blob) {
-        const file = new File([blob], "詠唱力診断結果.png", { type: "image/png" });
-        if (navigator.canShare?.({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], text: shareText });
-            return;
-          } catch {
-            return;
-          }
-        }
-      }
+      const appUrl = `twitter://post?message=${encodeURIComponent(shareText)}`;
+      window.location.href = appUrl;
+      setTimeout(() => {
+        if (!document.hidden) window.open(twitterWebUrl, "_blank");
+      }, 1500);
+    } else {
+      window.open(twitterWebUrl, "_blank");
     }
-
-    // PC・フォールバック：Xを直接開く（テキストのみ）
-    window.open(twitterWebUrl, "_blank");
   };
 
   const handleSaveImage = () => {
@@ -699,7 +693,7 @@ function ResultScreen({
           className="w-full py-3 rounded-full font-bold tracking-widest cursor-pointer text-sm"
           style={{ background: "#000", color: "#fff", border: "1px solid #333" }}
         >
-          𝕏 で結果をシェア（画像付き）
+          𝕏 で結果をシェア
         </button>
         <button
           onClick={handleSaveImage}
