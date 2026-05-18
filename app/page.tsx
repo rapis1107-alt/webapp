@@ -224,6 +224,13 @@ export default function Home() {
               <p className="font-bold mb-1" style={{ color: "#9333ea" }}>開き方</p>
               <p>画面下部の <span className="font-bold">「vercel.app」</span> をタップ<br />→「<span className="font-bold">ブラウザで開く</span>」を選択</p>
             </div>
+            <button
+              onClick={() => setIsXInAppBrowser(false)}
+              className="w-full py-2 rounded-full text-xs cursor-pointer"
+              style={{ border: "1px solid #ffffff22", color: "#ffffff44" }}
+            >
+              このまま使う
+            </button>
           </div>
         </div>
       )}
