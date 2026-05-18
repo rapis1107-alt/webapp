@@ -220,31 +220,11 @@ export default function Home() {
             <p className="text-sm opacity-70 leading-relaxed">
               このままでは診断後に結果をXへシェアしたり、画像を保存することができません。
             </p>
-            <button
-              onClick={() => {
-                const ua = navigator.userAgent;
-                if (/Android/i.test(ua)) {
-                  // Android: Chromeで強制的に開く
-                  const intentUrl = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`;
-                  window.location.href = intentUrl;
-                } else {
-                  // iOS: target="_blank" でSafari脱出を試みる
-                  const a = document.createElement("a");
-                  a.href = window.location.href;
-                  a.target = "_blank";
-                  a.rel = "noopener noreferrer";
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                }
-              }}
-              className="w-full py-3 rounded-full font-bold text-sm cursor-pointer"
-              style={{ background: "linear-gradient(135deg, #6b21a8, #cc1a1a)", color: "#e8e0f0" }}
-            >
-              ブラウザで開く
-            </button>
-            <div className="rounded-xl p-3 text-xs opacity-50 leading-relaxed" style={{ background: "#0a0008" }}>
-              <p>うまく開かない場合は<br />画面下部の <span className="font-bold">「vercel.app」</span> をタップ<br />→「<span className="font-bold">ブラウザで開く</span>」</p>
+            <div className="rounded-xl p-4 text-sm leading-relaxed space-y-1" style={{ background: "#0a0008", border: "1px solid #6b21a833" }}>
+              <p className="font-bold mb-2" style={{ color: "#9333ea" }}>開き方</p>
+              <p>画面下部の <span className="font-bold text-white">「vercel.app」</span> をタップ</p>
+              <p style={{ color: "#9333ea" }}>↓</p>
+              <p><span className="font-bold text-white">「ブラウザで開く」</span> を選択</p>
             </div>
             <button
               onClick={() => setIsXInAppBrowser(false)}
@@ -604,11 +584,12 @@ function ResultScreen({
     const twitterWebUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
-      const appUrl = `twitter://post?message=${encodeURIComponent(shareText)}`;
-      window.location.href = appUrl;
-      setTimeout(() => {
-        if (!document.hidden) window.open(twitterWebUrl, "_blank");
-      }, 1500);
+      // <a>.click() で開くことでブラウザ履歴を汚さずXアプリを起動
+      const a = document.createElement("a");
+      a.href = `twitter://post?message=${encodeURIComponent(shareText)}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } else {
       window.open(twitterWebUrl, "_blank");
     }
