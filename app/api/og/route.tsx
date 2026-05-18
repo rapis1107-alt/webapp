@@ -68,11 +68,6 @@ export async function GET(req: NextRequest) {
           {rank}
         </div>
 
-        {/* 称号 */}
-        <div style={{ fontSize: 26, fontWeight: "bold", color: "#d4a017", marginBottom: 6, display: "flex" }}>
-          {title}
-        </div>
-
         {/* スコア */}
         <div style={{ fontSize: 38, fontWeight: "bold", color: "#e8e0f0", marginBottom: 32, display: "flex", alignItems: "baseline", gap: 8 }}>
           {score}
