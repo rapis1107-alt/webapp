@@ -5,27 +5,28 @@ export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const rank      = searchParams.get("r")  || "E";
-  const score     = searchParams.get("s")  || "0";
-  const volume    = Number(searchParams.get("v")  || 0);
-  const intonation= Number(searchParams.get("i")  || 0);
-  const clarity   = Number(searchParams.get("c")  || 0);
-  const soul      = Number(searchParams.get("so") || 0);
-  const chuni     = Number(searchParams.get("ch") || 0);
+  const rank       = searchParams.get("r")  || "E";
+  const score      = searchParams.get("s")  || "0";
+  const volume     = Number(searchParams.get("v")  || 0);
+  const intonation = Number(searchParams.get("i")  || 0);
+  const clarity    = Number(searchParams.get("c")  || 0);
+  const soul       = Number(searchParams.get("so") || 0);
+  const chuni      = Number(searchParams.get("ch") || 0);
 
   const rankColor =
     rank === "EX" ? "#d4a017" :
     rank === "S"  ? "#ff6a00" :
-    rank === "A"  ? "#cc1a1a" :
-    rank === "B"  ? "#9333ea" :
-    rank === "C"  ? "#6b21a8" : "#555555";
+    rank === "A"  ? "#ff4444" :
+    rank === "B"  ? "#b060ff" :
+    rank === "C"  ? "#7c9fff" :
+    rank === "D"  ? "#66ccaa" : "#aaaaaa"; // E
 
   const bars = [
-    { label: "声量",      value: volume,     color: "#6b21a8" },
-    { label: "抑揚",      value: intonation, color: "#9333ea" },
-    { label: "詠唱安定度", value: clarity,    color: "#7c3aed" },
-    { label: "魂",        value: soul,       color: "#cc1a1a" },
-    { label: "厨二力",    value: chuni,      color: "#d4a017" },
+    { label: "声量",      value: volume,     color: "#a855f7" },
+    { label: "抑揚",      value: intonation, color: "#c084fc" },
+    { label: "詠唱安定度", value: clarity,    color: "#818cf8" },
+    { label: "魂",        value: soul,       color: "#f87171" },
+    { label: "厨二力",    value: chuni,      color: "#fbbf24" },
   ];
 
   return new ImageResponse(
@@ -39,52 +40,92 @@ export async function GET(req: NextRequest) {
           alignItems: "center",
           justifyContent: "center",
           background: "#0a0008",
-          padding: "40px 60px",
+          padding: "36px 80px",
           position: "relative",
         }}
       >
         {/* 背景グラデーション */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "radial-gradient(ellipse 70% 70% at 50% 50%, #1a001866 0%, transparent 70%)",
+          background: `radial-gradient(ellipse 60% 60% at 50% 45%, ${rankColor}22 0%, transparent 70%)`,
           display: "flex",
         }} />
 
         {/* アプリ名 */}
-        <div style={{ fontSize: 18, color: "#e8e0f055", letterSpacing: "0.3em", marginBottom: 12, display: "flex" }}>
+        <div style={{
+          fontSize: 28,
+          color: "#e8e0f0bb",
+          letterSpacing: "0.4em",
+          marginBottom: 16,
+          display: "flex",
+        }}>
           詠唱力診断
         </div>
 
         {/* ランク */}
         <div style={{
-          fontSize: 110,
+          fontSize: 130,
           fontWeight: "bold",
           color: rankColor,
           lineHeight: 1,
-          marginBottom: 6,
+          marginBottom: 8,
           display: "flex",
-          textShadow: `0 0 60px ${rankColor}`,
+          textShadow: `0 0 80px ${rankColor}cc`,
         }}>
           {rank}
         </div>
 
         {/* スコア */}
-        <div style={{ fontSize: 38, fontWeight: "bold", color: "#e8e0f0", marginBottom: 32, display: "flex", alignItems: "baseline", gap: 8 }}>
+        <div style={{
+          fontSize: 48,
+          fontWeight: "bold",
+          color: "#ffffff",
+          marginBottom: 36,
+          display: "flex",
+          alignItems: "baseline",
+          gap: 10,
+        }}>
           {score}
-          <span style={{ fontSize: 18, color: "#e8e0f066", display: "flex" }}>/ 100</span>
+          <span style={{ fontSize: 24, color: "#e8e0f077", display: "flex" }}>/ 100</span>
         </div>
 
         {/* スコアバー */}
-        <div style={{ width: "85%", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ width: "90%", display: "flex", flexDirection: "column", gap: 16 }}>
           {bars.map(({ label, value, color }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ fontSize: 13, color: "#e8e0f0bb", width: 80, textAlign: "right", display: "flex", justifyContent: "flex-end" }}>
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 18 }}>
+              <div style={{
+                fontSize: 20,
+                color: "#e8e0f0dd",
+                width: 110,
+                textAlign: "right",
+                display: "flex",
+                justifyContent: "flex-end",
+              }}>
                 {label}
               </div>
-              <div style={{ flex: 1, height: 13, background: "#e8e0f01a", borderRadius: 8, display: "flex", overflow: "hidden" }}>
-                <div style={{ width: `${value}%`, height: "100%", background: color, borderRadius: 8, display: "flex" }} />
+              <div style={{
+                flex: 1,
+                height: 20,
+                background: "#e8e0f01a",
+                borderRadius: 10,
+                display: "flex",
+                overflow: "hidden",
+              }}>
+                <div style={{
+                  width: `${value}%`,
+                  height: "100%",
+                  background: color,
+                  borderRadius: 10,
+                  display: "flex",
+                }} />
               </div>
-              <div style={{ fontSize: 13, color: "#e8e0f0bb", width: 28, display: "flex" }}>
+              <div style={{
+                fontSize: 20,
+                fontWeight: "bold",
+                color: "#ffffff",
+                width: 36,
+                display: "flex",
+              }}>
                 {value}
               </div>
             </div>
@@ -92,7 +133,13 @@ export async function GET(req: NextRequest) {
         </div>
 
         {/* ハッシュタグ */}
-        <div style={{ position: "absolute", bottom: 20, fontSize: 14, color: "#e8e0f033", display: "flex" }}>
+        <div style={{
+          position: "absolute",
+          bottom: 22,
+          fontSize: 18,
+          color: "#e8e0f055",
+          display: "flex",
+        }}>
           #詠唱力診断
         </div>
       </div>
