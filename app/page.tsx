@@ -568,7 +568,7 @@ function ResultScreen({
 
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://webapp-6bdo.vercel.app";
   const buildResultUrl = () =>
-    `${siteUrl}/result?r=${result.rank}&s=${result.score}&t=${encodeURIComponent(result.title)}&cn=${encodeURIComponent(chant.title)}&v=${result.volume}&i=${result.intonation}&c=${result.clarity}&so=${result.soul}&ch=${result.chuni}`;
+    `${siteUrl}/result?r=${result.rank}&s=${result.score}&cn=${chant.id}&v=${result.volume}&i=${result.intonation}&c=${result.clarity}&so=${result.soul}&ch=${result.chuni}`;
   const buildShareText = () => {
     const taunt = pickTaunt(lastTauntRef.current);
     lastTauntRef.current = taunt;
@@ -587,12 +587,8 @@ function ResultScreen({
     const twitterWebUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
-      // <a>.click() で開くことでブラウザ履歴を汚さずXアプリを起動
-      const a = document.createElement("a");
-      a.href = `twitter://post?message=${encodeURIComponent(shareText)}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // window.open(_blank) でXアプリを起動（現在ページを手放さないのでキャンセル後フリーズしない）
+      window.open(`twitter://post?message=${encodeURIComponent(shareText)}`, "_blank", "noreferrer");
     } else {
       window.open(twitterWebUrl, "_blank");
     }

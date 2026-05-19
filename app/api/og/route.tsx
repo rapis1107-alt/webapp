@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import { chants } from "../../../data/chants";
 
 export const runtime = "edge";
 
@@ -7,8 +8,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const rank       = searchParams.get("r")  || "E";
   const score      = searchParams.get("s")  || "0";
-  const title      = searchParams.get("t")  || "";
-  const chantName  = searchParams.get("cn") || "";
+  const chantId    = searchParams.get("cn") || "";
+  const chantName  = chants.find(c => c.id === chantId)?.title || "";
   const volume     = Number(searchParams.get("v")  || 0);
   const intonation = Number(searchParams.get("i")  || 0);
   const clarity    = Number(searchParams.get("c")  || 0);
@@ -145,22 +146,6 @@ export async function GET(req: NextRequest) {
             <span style={{ fontSize: 20, color: "#e8e0f066", display: "flex" }}>/ 100</span>
           </div>
 
-          {/* 称号 */}
-          {title && (
-            <div style={{
-              marginTop: 20,
-              fontSize: 26,
-              fontWeight: "bold",
-              color: "#d4a017",
-              textAlign: "center",
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              lineHeight: 1.4,
-            }}>
-              『{title}』
-            </div>
-          )}
         </div>
 
         {/* 縦区切り線 */}
