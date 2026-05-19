@@ -692,6 +692,7 @@ function ResultScreen({
             ── EX昇格条件 ──
           </p>
           {[
+            { label: `総合スコア 96以上（現在 ${result.score}）`, met: result.score >= 96 },
             { label: `抑揚 88以上（現在 ${result.intonation}）`, met: result.intonation >= 88 },
             { label: `尺 90以上（現在 ${result.duration}）`, met: result.duration >= 90 },
             { label: `詠唱安定度 88以上（現在 ${result.clarity}）`, met: result.clarity >= 88 },
@@ -712,6 +713,7 @@ function ResultScreen({
             ── SS昇格条件 ──
           </p>
           {[
+            { label: `総合スコア 93以上（現在 ${result.score}）`, met: result.score >= 93 },
             { label: `抑揚 80以上（現在 ${result.intonation}）`, met: result.intonation >= 80 },
             { label: `尺 85以上（現在 ${result.duration}）`, met: result.duration >= 85 },
             { label: `詠唱安定度 85以上（現在 ${result.clarity}）`, met: result.clarity >= 85 },
@@ -732,6 +734,7 @@ function ResultScreen({
             ── S昇格条件 ──
           </p>
           {[
+            { label: `総合スコア 90以上（現在 ${result.score}）`, met: result.score >= 90 },
             { label: `抑揚 65以上（現在 ${result.intonation}）`, met: result.intonation >= 65 },
             { label: `尺 80以上（現在 ${result.duration}）`, met: result.duration >= 80 },
             { label: `詠唱安定度 80以上（現在 ${result.clarity}）`, met: result.clarity >= 80 },
