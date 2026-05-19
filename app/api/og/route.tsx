@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
 
   const rankColor =
     rank === "EX" ? "#d4a017" :
+    rank === "SS" ? "#ffcc00" :
     rank === "S"  ? "#ff6a00" :
     rank === "A"  ? "#ff4444" :
     rank === "B"  ? "#b060ff" :

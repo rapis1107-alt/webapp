@@ -77,7 +77,7 @@ top → permission → countdown → recording → analyzing → result / error
 ### 入力（AudioMetrics）
 - duration, expectedSeconds, avgVolume, maxVolume
 - volumeVariance, silenceRatio
-- longSilenceCount（0.8〜1.5s無音）、veryLongSilenceCount（1.5s以上）
+- longSilenceCount（常に0、廃止済み）、veryLongSilenceCount（2.0s以上）
 - difficulty、userCompleted
 
 ### 声量（非線形piecewise）
@@ -95,7 +95,7 @@ top → permission → countdown → recording → analyzing → result / error
 ### 各指標
 - **抑揚**: volumeVariance を normalize(0.02, 0.12)。声量<0.02なら×0.4
 - **尺**: actualSpeakingTime / expectedSeconds の達成率でpiecewise
-- **詠唱安定度**: 基点60 + speakingRatioボーナス - 無音ペナルティ
+- **詠唱安定度**: 基点60 + speakingRatioボーナス - 無音ペナルティ（2秒以上の無音のみ-15/回。2秒未満は演技的な間として無視）
 - **魂**: intonation×0.50 + clarity×0.25 + duration×0.15 + volume×0.10
 - **厨二力**: intonation×0.45 + duration×0.25 + clarity×0.20 + random×10
 
@@ -115,7 +115,7 @@ top → permission → countdown → recording → analyzing → result / error
 - EXPERT専用: userCompleted && achievementRatio≥0.95 && intonation≥85 && clarity≥85 && volume≥50
 
 ### S/A昇格条件
-- S: intonation≥75, duration≥80, clarity≥80, volume≥45
+- S: intonation≥65, duration≥80, clarity≥80, volume≥45
 - A: intonation≥55, duration≥70, clarity≥70, volume≥35
 
 ---
@@ -129,7 +129,9 @@ top → permission → countdown → recording → analyzing → result / error
 5. 結果コメント
 6. スコアバー（声量 / 抑揚 / 詠唱安定度 / 魂 / 厨二力）
 7. EXPERTのみ：禁術級認定条件チェックリスト
-8. Xシェア / 画像保存 / もう一度 ボタン
+8. SランクのときEX昇格条件チェックリスト
+9. A/BランクのときS昇格条件チェックリスト
+10. Xシェア / 画像保存 / もう一度 ボタン
 
 ---
 
@@ -200,6 +202,16 @@ GAで確認: レポート → エンゲージメント → イベント
 - OGP / Twitter Card / canonical URL 設定済み
 - sitemap.xml / robots.txt 生成済み
 - インデックス登録リクエスト済み（2026-05-16）
+
+---
+
+## 更新履歴
+
+### 2026-05-20
+- 無音ペナルティ廃止：2秒未満の間は演技的な間として減点なしに変更（`app/page.tsx`, `lib/scoring.ts`）
+- S昇格の抑揚足切りを 75 → 65 に緩和（`lib/scoring.ts`）
+- A/BランクにS昇格条件チェックリスト追加（`app/page.tsx`）
+- SランクにEX昇格条件チェックリスト追加（`app/page.tsx`）
 
 ---
 

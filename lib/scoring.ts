@@ -94,6 +94,7 @@ function getRank(
 ): keyof typeof titles {
   let rank: keyof typeof titles;
   if      (score >= 96) rank = "EX";
+  else if (score >= 93) rank = "SS";
   else if (score >= 90) rank = "S";
   else if (score >= 82) rank = "A";
   else if (score >= 68) rank = "B";
@@ -102,7 +103,7 @@ function getRank(
   else                  rank = "E";
 
   // 共通EX条件
-  if (rank === "EX" && !(s.intonation >= 88 && s.duration >= 90 && s.clarity >= 88 && s.volume >= 55)) rank = "S";
+  if (rank === "EX" && !(s.intonation >= 88 && s.duration >= 90 && s.clarity >= 88 && s.volume >= 100)) rank = "SS";
   // EXPERT専用EX条件（禁術級認定）
   if (rank === "EX" && difficulty === "expert") {
     const expertEx =
@@ -110,12 +111,16 @@ function getRank(
       achievementRatio >= 0.95 &&
       s.intonation >= 85 &&
       s.clarity >= 85 &&
-      s.volume >= 50;
-    if (!expertEx) rank = "S";
+      s.volume >= 90;
+    if (!expertEx) rank = "SS";
   }
 
-  if (rank === "S"  && !(s.intonation >= 65 && s.duration >= 80 && s.clarity >= 80 && s.volume >= 45)) rank = "A";
-  if (rank === "A"  && !(s.intonation >= 55 && s.duration >= 70 && s.clarity >= 70 && s.volume >= 35)) rank = "B";
+  if (rank === "SS" && !(s.intonation >= 80 && s.duration >= 85 && s.clarity >= 85 && s.volume >= 90)) rank = "S";
+  if (rank === "S"  && !(s.intonation >= 65 && s.duration >= 80 && s.clarity >= 80 && s.volume >= 80)) rank = "A";
+  if (rank === "A"  && !(s.intonation >= 55 && s.duration >= 70 && s.clarity >= 70 && s.volume >= 70)) rank = "B";
+  if (rank === "B"  && s.volume < 60) rank = "C";
+  if (rank === "C"  && s.volume < 50) rank = "D";
+  if (rank === "D"  && s.volume < 40) rank = "E";
 
   return rank;
 }
@@ -182,8 +187,8 @@ function calculateScores(metrics: AudioMetrics) {
   if (achievementRatio < 0.90) score = Math.min(score, 81); // 上限B
 
   // 声量・抑揚不足によるキャップ
-  if (volume     < 20) score = Math.min(score, 51); // 上限D
-  if (volume     < 35) score = Math.min(score, 81); // 上限B
+  if (volume     < 30) score = Math.min(score, 34); // 上限E
+  if (volume     < 40) score = Math.min(score, 51); // 上限D
   if (intonation < 40) score = Math.min(score, 81); // 上限B（棒読み対策）
   if (intonation < 55) score = Math.min(score, 89); // 上限A
 

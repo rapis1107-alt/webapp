@@ -559,8 +559,12 @@ function ResultScreen({
 
   const rankColor =
     result.rank === "EX" ? "#d4a017" :
+    result.rank === "SS" ? "#ffcc00" :
     result.rank === "S"  ? "#ff6a00" :
-    result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
+    result.rank === "A"  ? "#cc1a1a" :
+    result.rank === "B"  ? "#9333ea" :
+    result.rank === "C"  ? "#6b21a8" :
+    result.rank === "D"  ? "#66ccaa" : "#aaaaaa";
 
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://webapp-6bdo.vercel.app";
   const buildResultUrl = () =>
@@ -681,9 +685,9 @@ function ResultScreen({
         </div>
       )}
 
-      {/* S → EX 昇格条件チェックリスト（Sランク時） */}
-      {result.rank === "S" && (
-        <div className="w-full rounded-xl p-4 space-y-2" style={{ border: "1px solid #7c3aed66", background: "#1a002288" }}>
+      {/* SS → EX 昇格条件チェックリスト（SSランク時） */}
+      {result.rank === "SS" && (
+        <div className="w-full rounded-xl p-4 space-y-2" style={{ border: "1px solid #ffcc0066", background: "#1a002288" }}>
           <p className="text-xs font-bold tracking-widest text-center mb-3" style={{ color: "#d4a017" }}>
             ── EX昇格条件 ──
           </p>
@@ -691,7 +695,27 @@ function ResultScreen({
             { label: `抑揚 88以上（現在 ${result.intonation}）`, met: result.intonation >= 88 },
             { label: `尺 90以上（現在 ${result.duration}）`, met: result.duration >= 90 },
             { label: `詠唱安定度 88以上（現在 ${result.clarity}）`, met: result.clarity >= 88 },
-            { label: `声量 55以上（現在 ${result.volume}）`, met: result.volume >= 55 },
+            { label: `声量 100（現在 ${result.volume}）`, met: result.volume >= 100 },
+          ].map(({ label, met }) => (
+            <div key={label} className="flex items-center gap-2 text-xs">
+              <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
+              <span style={{ color: met ? "#86efac" : "#fca5a5" }}>{label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* S → SS 昇格条件チェックリスト（Sランク時） */}
+      {result.rank === "S" && (
+        <div className="w-full rounded-xl p-4 space-y-2" style={{ border: "1px solid #ffcc0044", background: "#1a002288" }}>
+          <p className="text-xs font-bold tracking-widest text-center mb-3" style={{ color: "#ffcc00" }}>
+            ── SS昇格条件 ──
+          </p>
+          {[
+            { label: `抑揚 80以上（現在 ${result.intonation}）`, met: result.intonation >= 80 },
+            { label: `尺 85以上（現在 ${result.duration}）`, met: result.duration >= 85 },
+            { label: `詠唱安定度 85以上（現在 ${result.clarity}）`, met: result.clarity >= 85 },
+            { label: `声量 90以上（現在 ${result.volume}）`, met: result.volume >= 90 },
           ].map(({ label, met }) => (
             <div key={label} className="flex items-center gap-2 text-xs">
               <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
@@ -711,7 +735,7 @@ function ResultScreen({
             { label: `抑揚 65以上（現在 ${result.intonation}）`, met: result.intonation >= 65 },
             { label: `尺 80以上（現在 ${result.duration}）`, met: result.duration >= 80 },
             { label: `詠唱安定度 80以上（現在 ${result.clarity}）`, met: result.clarity >= 80 },
-            { label: `声量 45以上（現在 ${result.volume}）`, met: result.volume >= 45 },
+            { label: `声量 80以上（現在 ${result.volume}）`, met: result.volume >= 80 },
           ].map(({ label, met }) => (
             <div key={label} className="flex items-center gap-2 text-xs">
               <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
@@ -778,8 +802,12 @@ async function drawResultCanvas(
 
   const rankColor =
     result.rank === "EX" ? "#d4a017" :
+    result.rank === "SS" ? "#ffcc00" :
     result.rank === "S"  ? "#ff6a00" :
-    result.rank === "A"  ? "#cc1a1a" : "#6b21a8";
+    result.rank === "A"  ? "#cc1a1a" :
+    result.rank === "B"  ? "#9333ea" :
+    result.rank === "C"  ? "#6b21a8" :
+    result.rank === "D"  ? "#66ccaa" : "#aaaaaa";
 
   // 詠唱名
   ctx.fillStyle = "#e8e0f055";

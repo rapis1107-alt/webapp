@@ -47,10 +47,12 @@ export default async function ResultPage({ searchParams }: Props) {
 
   const rankColor =
     rank === "EX" ? "#d4a017" :
+    rank === "SS" ? "#ffcc00" :
     rank === "S"  ? "#ff6a00" :
     rank === "A"  ? "#cc1a1a" :
     rank === "B"  ? "#9333ea" :
-    rank === "C"  ? "#6b21a8" : "#555555";
+    rank === "C"  ? "#6b21a8" :
+    rank === "D"  ? "#66ccaa" : "#aaaaaa";
 
   return (
     <main className="min-h-dvh flex flex-col items-center justify-center px-6 py-12 text-center" style={{ color: "#e8e0f0", background: "#0a0008" }}>
