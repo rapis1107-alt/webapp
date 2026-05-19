@@ -70,15 +70,14 @@ export default function Home() {
         : 1;
 
       // 無音区間を長さで分類（サンプリング間隔 100ms）
-      // 0.25s未満(< 3frames)は無視、0.8s〜1.5s(8〜14frames)はlongSilence、1.5s以上(>=15frames)はveryLongSilence
+      // 2.0s未満は演技的な間として無視、2.0s以上(>=20frames)はveryLongSilence
       let longSilenceCount = 0;
       let veryLongSilenceCount = 0;
       let silenceRun = 0;
 
       const classifySilenceRun = (frames: number) => {
-        if (frames >= 15)     veryLongSilenceCount++;
-        else if (frames >= 8) longSilenceCount++;
-        // 3〜7フレーム（0.25〜0.8s）は詠唱の自然な間として無視
+        if (frames >= 20) veryLongSilenceCount++;
+        // 0.25〜2.0s は詠唱の演技的な間として無視
       };
 
       for (const v of vols) {
@@ -679,6 +678,46 @@ function ResultScreen({
           {result.rank === "EX" && (
             <p className="text-xs text-center mt-2 font-bold" style={{ color: "#d4a017" }}>禁術級認定済み</p>
           )}
+        </div>
+      )}
+
+      {/* S → EX 昇格条件チェックリスト（Sランク時） */}
+      {result.rank === "S" && (
+        <div className="w-full rounded-xl p-4 space-y-2" style={{ border: "1px solid #7c3aed66", background: "#1a002288" }}>
+          <p className="text-xs font-bold tracking-widest text-center mb-3" style={{ color: "#d4a017" }}>
+            ── EX昇格条件 ──
+          </p>
+          {[
+            { label: `抑揚 88以上（現在 ${result.intonation}）`, met: result.intonation >= 88 },
+            { label: `尺 90以上（現在 ${result.duration}）`, met: result.duration >= 90 },
+            { label: `詠唱安定度 88以上（現在 ${result.clarity}）`, met: result.clarity >= 88 },
+            { label: `声量 55以上（現在 ${result.volume}）`, met: result.volume >= 55 },
+          ].map(({ label, met }) => (
+            <div key={label} className="flex items-center gap-2 text-xs">
+              <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
+              <span style={{ color: met ? "#86efac" : "#fca5a5" }}>{label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* A → S 昇格条件チェックリスト（A/Bランク時） */}
+      {(result.rank === "A" || result.rank === "B") && (
+        <div className="w-full rounded-xl p-4 space-y-2" style={{ border: "1px solid #7c3aed44", background: "#1a002266" }}>
+          <p className="text-xs font-bold tracking-widest text-center mb-3" style={{ color: "#9333ea" }}>
+            ── S昇格条件 ──
+          </p>
+          {[
+            { label: `抑揚 65以上（現在 ${result.intonation}）`, met: result.intonation >= 65 },
+            { label: `尺 80以上（現在 ${result.duration}）`, met: result.duration >= 80 },
+            { label: `詠唱安定度 80以上（現在 ${result.clarity}）`, met: result.clarity >= 80 },
+            { label: `声量 45以上（現在 ${result.volume}）`, met: result.volume >= 45 },
+          ].map(({ label, met }) => (
+            <div key={label} className="flex items-center gap-2 text-xs">
+              <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
+              <span style={{ color: met ? "#86efac" : "#fca5a5" }}>{label}</span>
+            </div>
+          ))}
         </div>
       )}
 

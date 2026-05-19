@@ -113,7 +113,7 @@ function getRank(
     if (!expertEx) rank = "S";
   }
 
-  if (rank === "S"  && !(s.intonation >= 75 && s.duration >= 80 && s.clarity >= 80 && s.volume >= 45)) rank = "A";
+  if (rank === "S"  && !(s.intonation >= 65 && s.duration >= 80 && s.clarity >= 80 && s.volume >= 45)) rank = "A";
   if (rank === "A"  && !(s.intonation >= 55 && s.duration >= 70 && s.clarity >= 70 && s.volume >= 35)) rank = "B";
 
   return rank;
@@ -141,8 +141,7 @@ function calculateScores(metrics: AudioMetrics) {
   else if (speakingRatio >= 0.60) clarity += 10;
   else if (speakingRatio >= 0.50) clarity += 5;
 
-  // 長い無音区間ペナルティ（途中で止まった・詰まった）
-  clarity -= metrics.longSilenceCount * 8;
+  // 2秒以上の無音区間のみペナルティ（演技的な間は減点しない）
   clarity -= metrics.veryLongSilenceCount * 15;
 
   // 極端な音量の乱れのみペナルティ（通常の抑揚は減点しない）
