@@ -794,6 +794,21 @@ async function drawResultCanvas(
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
+  // 魔法陣背景（ランダムで紫・赤）
+  const circleImg = new Image();
+  circleImg.src = Math.random() > 0.5 ? "/circle-purple.png" : "/circle-red.png";
+  await new Promise<void>((resolve) => {
+    circleImg.onload = () => {
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      const size = 460;
+      ctx.drawImage(circleImg, (w - size) / 2, (h - size) / 2, size, size);
+      ctx.restore();
+      resolve();
+    };
+    circleImg.onerror = () => resolve();
+  });
+
   ctx.strokeStyle = "#6b21a844";
   ctx.lineWidth = 1.5;
   ctx.beginPath();

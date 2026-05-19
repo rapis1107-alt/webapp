@@ -15,6 +15,8 @@ export async function GET(req: NextRequest) {
   const soul       = Number(searchParams.get("so") || 0);
   const chuni      = Number(searchParams.get("ch") || 0);
 
+  const siteUrl = new URL(req.url).origin;
+
   const rankColor =
     rank === "EX" ? "#d4a017" :
     rank === "SS" ? "#ffcc00" :
@@ -23,6 +25,12 @@ export async function GET(req: NextRequest) {
     rank === "B"  ? "#b060ff" :
     rank === "C"  ? "#7c9fff" :
     rank === "D"  ? "#66ccaa" : "#aaaaaa";
+
+  // ランダムで紫・赤どちらかを選択（両方重ねて表示）
+  const usePurple = Math.random() > 0.5;
+  const circleUrl = usePurple
+    ? `${siteUrl}/circle-purple.png`
+    : `${siteUrl}/circle-red.png`;
 
   const bars = [
     { label: "声量",      value: volume,     color: "#a855f7" },
@@ -52,7 +60,24 @@ export async function GET(req: NextRequest) {
           display: "flex",
         }} />
 
-        {/* 左カラム：ランク・称号・スコア */}
+        {/* 魔法陣背景（左カラム中央） */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={circleUrl}
+          width={520}
+          height={520}
+          style={{
+            position: "absolute",
+            left: -10,
+            top: 55,
+            width: 520,
+            height: 520,
+            opacity: 0.22,
+            display: "flex",
+          }}
+        />
+
+        {/* 左カラム：呪文名・ランク・スコア・称号 */}
         <div style={{
           width: "42%",
           display: "flex",
@@ -85,10 +110,10 @@ export async function GET(req: NextRequest) {
               flexWrap: "wrap",
               justifyContent: "center",
               lineHeight: 1.3,
-              padding: "4px 12px",
+              padding: "5px 14px",
               borderRadius: 8,
-              border: `1px solid ${rankColor}88`,
-              background: `${rankColor}22`,
+              border: `1px solid ${rankColor}99`,
+              background: "#00000066",
             }}>
               {chantName}
             </div>
