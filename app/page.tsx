@@ -810,10 +810,10 @@ async function drawResultCanvas(
     result.rank === "D"  ? "#66ccaa" : "#aaaaaa";
 
   // 詠唱名
-  ctx.fillStyle = "#e8e0f055";
-  ctx.font = "14px sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 18px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(`詠唱：${chantTitle}`, w / 2, 32);
+  ctx.fillText(`詠唱：${chantTitle}`, w / 2, 34);
 
   // ランク
   ctx.save();
