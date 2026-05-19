@@ -584,14 +584,8 @@ function ResultScreen({
   const handleShare = () => {
     gtagEvent("share_click");
     const shareText = buildShareText();
-    const twitterWebUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile) {
-      // window.open(_blank) でXアプリを起動（現在ページを手放さないのでキャンセル後フリーズしない）
-      window.open(`twitter://post?message=${encodeURIComponent(shareText)}`, "_blank", "noreferrer");
-    } else {
-      window.open(twitterWebUrl, "_blank");
-    }
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+    window.open(twitterUrl, "_blank", "noreferrer");
   };
 
   const handleSaveImage = () => {
