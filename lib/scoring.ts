@@ -31,6 +31,7 @@ export interface ScoreResult {
   intonationComment: string;
   clarityComment: string;
   soulComment: string;
+  chuniComment: string;
   achievementRatio: number;
   userCompleted: boolean;
   difficulty: Difficulty;
@@ -220,5 +221,6 @@ export function calcScore(metrics: AudioMetrics): ScoreResult {
     intonationComment: getMetricComment("intonation", scores.intonation),
     clarityComment:   getMetricComment("clarity",   scores.clarity),
     soulComment:      getMetricComment("soul",      scores.soul),
+    chuniComment:     getMetricComment("chuni",     scores.chuni),
   };
 }

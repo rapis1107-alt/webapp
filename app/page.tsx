@@ -654,7 +654,7 @@ function ResultScreen({
         <ScoreBar label="抑揚"   value={result.intonation} color="#9333ea" comment={result.intonationComment} />
         <ScoreBar label="詠唱安定度" value={result.clarity}    color="#7c3aed" comment={result.clarityComment} />
         <ScoreBar label="魂"     value={result.soul}       color="#cc1a1a" comment={result.soulComment} />
-        <ScoreBar label="厨二力" value={result.chuni}      color="#d4a017" />
+        <ScoreBar label="厨二力" value={result.chuni}      color="#d4a017" comment={result.chuniComment} />
       </div>
 
       {/* EXPERT 禁術級認定条件 */}
