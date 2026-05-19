@@ -122,13 +122,21 @@ function getRank(
 function calculateScores(metrics: AudioMetrics) {
   // 実発話時間（無音除く）で尺を評価
   const actualSpeakingTime = metrics.duration * (1 - metrics.silenceRatio);
-  const achievementRatio   = actualSpeakingTime / metrics.expectedSeconds;
+
+  // 完了ボタンで終了 かつ 期待時間の半分以上使った場合は、
+  // 実録音時間を基準にして尺を評価（早押しで損しない）
+  const effectiveExpected =
+    metrics.userCompleted && metrics.duration >= metrics.expectedSeconds * 0.5
+      ? metrics.duration
+      : metrics.expectedSeconds;
+
+  const achievementRatio = actualSpeakingTime / effectiveExpected;
 
   let volume     = scoreVolume(metrics.avgVolume);
   let intonation = normalize(metrics.volumeVariance, 0.02, 0.12);
   // 声量が低い場合は抑揚補正（ノイズを抑揚として拾わないように）
   if (metrics.avgVolume < 0.02) intonation *= 0.4;
-  let duration   = scoreDuration(actualSpeakingTime, metrics.expectedSeconds);
+  let duration   = scoreDuration(actualSpeakingTime, effectiveExpected);
   const speakingRatio = 1 - metrics.silenceRatio;
 
   // 詠唱安定度：発話の滑らかさを測る。速さ・声量は評価しない
