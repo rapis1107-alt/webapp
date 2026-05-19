@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
   const rank       = searchParams.get("r")  || "E";
   const score      = searchParams.get("s")  || "0";
   const title      = searchParams.get("t")  || "";
+  const chantName  = searchParams.get("cn") || "";
   const volume     = Number(searchParams.get("v")  || 0);
   const intonation = Number(searchParams.get("i")  || 0);
   const clarity    = Number(searchParams.get("c")  || 0);
@@ -66,11 +67,32 @@ export async function GET(req: NextRequest) {
             fontSize: 20,
             color: "#e8e0f077",
             letterSpacing: "0.35em",
-            marginBottom: 20,
+            marginBottom: 12,
             display: "flex",
           }}>
             詠唱力診断
           </div>
+
+          {/* 呪文名 */}
+          {chantName && (
+            <div style={{
+              fontSize: 22,
+              fontWeight: "bold",
+              color: "#ffffff",
+              textAlign: "center",
+              marginBottom: 12,
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              lineHeight: 1.3,
+              padding: "4px 12px",
+              borderRadius: 8,
+              border: `1px solid ${rankColor}88`,
+              background: `${rankColor}22`,
+            }}>
+              {chantName}
+            </div>
+          )}
 
           {/* ランク */}
           <div style={{
