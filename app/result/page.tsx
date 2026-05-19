@@ -4,7 +4,7 @@ import Link from "next/link";
 const SITE_URL = "https://webapp-6bdo.vercel.app";
 
 type SearchParams = {
-  r?: string; s?: string; t?: string;
+  r?: string; s?: string; t?: string; cn?: string;
   v?: string; i?: string; c?: string;
   so?: string; ch?: string; ct?: string;
 };

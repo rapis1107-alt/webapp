@@ -661,92 +661,90 @@ function ResultScreen({
         <ScoreBar label="厨二力" value={result.chuni}      color="#d4a017" comment={result.chuniComment} />
       </div>
 
-      {/* EXPERT 禁術級認定条件 */}
-      {result.difficulty === "expert" && (
-        <div className="w-full rounded-xl p-4 space-y-2" style={{ border: "1px solid #7c3aed66", background: "#1a002288" }}>
-          <p className="text-xs font-bold tracking-widest text-center mb-3" style={{ color: "#d4a017" }}>
-            ── 禁術級認定条件 ──
-          </p>
-          {[
-            { label: "詠唱完了ボタンで終了", met: result.userCompleted },
-            { label: `尺達成率 95%以上（現在 ${Math.round(result.achievementRatio * 100)}%）`, met: result.achievementRatio >= 0.95 },
-            { label: `抑揚 85以上（現在 ${result.intonation}）`, met: result.intonation >= 85 },
-            { label: `詠唱安定度 85以上（現在 ${result.clarity}）`, met: result.clarity >= 85 },
-            { label: `声量 50以上（現在 ${result.volume}）`, met: result.volume >= 50 },
-          ].map(({ label, met }) => (
-            <div key={label} className="flex items-center gap-2 text-xs">
-              <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
-              <span style={{ color: met ? "#86efac" : "#fca5a5" }}>{label}</span>
-            </div>
-          ))}
-          {result.rank === "EX" && (
-            <p className="text-xs text-center mt-2 font-bold" style={{ color: "#d4a017" }}>禁術級認定済み</p>
-          )}
-        </div>
-      )}
-
-      {/* SS → EX 昇格条件チェックリスト（SSランク時） */}
-      {result.rank === "SS" && (
-        <div className="w-full rounded-xl p-4 space-y-2" style={{ border: "1px solid #ffcc0066", background: "#1a002288" }}>
-          <p className="text-xs font-bold tracking-widest text-center mb-3" style={{ color: "#d4a017" }}>
-            ── EX昇格条件 ──
-          </p>
-          {[
-            { label: `総合スコア 96以上（現在 ${result.score}）`, met: result.score >= 96 },
-            { label: `抑揚 88以上（現在 ${result.intonation}）`, met: result.intonation >= 88 },
-            { label: `尺 90以上（現在 ${result.duration}）`, met: result.duration >= 90 },
-            { label: `詠唱安定度 88以上（現在 ${result.clarity}）`, met: result.clarity >= 88 },
-            { label: `声量 100（現在 ${result.volume}）`, met: result.volume >= 100 },
-          ].map(({ label, met }) => (
-            <div key={label} className="flex items-center gap-2 text-xs">
-              <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
-              <span style={{ color: met ? "#86efac" : "#fca5a5" }}>{label}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* S → SS 昇格条件チェックリスト（Sランク時） */}
-      {result.rank === "S" && (
-        <div className="w-full rounded-xl p-4 space-y-2" style={{ border: "1px solid #ffcc0044", background: "#1a002288" }}>
-          <p className="text-xs font-bold tracking-widest text-center mb-3" style={{ color: "#ffcc00" }}>
-            ── SS昇格条件 ──
-          </p>
-          {[
-            { label: `総合スコア 93以上（現在 ${result.score}）`, met: result.score >= 93 },
-            { label: `抑揚 80以上（現在 ${result.intonation}）`, met: result.intonation >= 80 },
-            { label: `尺 85以上（現在 ${result.duration}）`, met: result.duration >= 85 },
-            { label: `詠唱安定度 85以上（現在 ${result.clarity}）`, met: result.clarity >= 85 },
-            { label: `声量 90以上（現在 ${result.volume}）`, met: result.volume >= 90 },
-          ].map(({ label, met }) => (
-            <div key={label} className="flex items-center gap-2 text-xs">
-              <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
-              <span style={{ color: met ? "#86efac" : "#fca5a5" }}>{label}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* A → S 昇格条件チェックリスト（A/Bランク時） */}
-      {(result.rank === "A" || result.rank === "B") && (
-        <div className="w-full rounded-xl p-4 space-y-2" style={{ border: "1px solid #7c3aed44", background: "#1a002266" }}>
-          <p className="text-xs font-bold tracking-widest text-center mb-3" style={{ color: "#9333ea" }}>
-            ── S昇格条件 ──
-          </p>
-          {[
-            { label: `総合スコア 90以上（現在 ${result.score}）`, met: result.score >= 90 },
-            { label: `抑揚 65以上（現在 ${result.intonation}）`, met: result.intonation >= 65 },
-            { label: `尺 80以上（現在 ${result.duration}）`, met: result.duration >= 80 },
-            { label: `詠唱安定度 80以上（現在 ${result.clarity}）`, met: result.clarity >= 80 },
-            { label: `声量 80以上（現在 ${result.volume}）`, met: result.volume >= 80 },
-          ].map(({ label, met }) => (
-            <div key={label} className="flex items-center gap-2 text-xs">
-              <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
-              <span style={{ color: met ? "#86efac" : "#fca5a5" }}>{label}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* 次のランクへの昇格条件チェックリスト（EX以外） */}
+      {result.rank !== "EX" && (() => {
+        const nextRankConfig: Record<string, { label: string; color: string; items: { label: string; met: boolean }[] }> = {
+          E: {
+            label: "D昇格条件", color: "#66ccaa",
+            items: [
+              { label: `総合スコア 35以上（現在 ${result.score}）`, met: result.score >= 35 },
+              { label: `声量 40以上（現在 ${result.volume}）`, met: result.volume >= 40 },
+            ],
+          },
+          D: {
+            label: "C昇格条件", color: "#6b21a8",
+            items: [
+              { label: `総合スコア 52以上（現在 ${result.score}）`, met: result.score >= 52 },
+              { label: `声量 50以上（現在 ${result.volume}）`, met: result.volume >= 50 },
+            ],
+          },
+          C: {
+            label: "B昇格条件", color: "#9333ea",
+            items: [
+              { label: `総合スコア 68以上（現在 ${result.score}）`, met: result.score >= 68 },
+              { label: `声量 60以上（現在 ${result.volume}）`, met: result.volume >= 60 },
+            ],
+          },
+          B: {
+            label: "A昇格条件", color: "#cc1a1a",
+            items: [
+              { label: `総合スコア 82以上（現在 ${result.score}）`, met: result.score >= 82 },
+              { label: `抑揚 55以上（現在 ${result.intonation}）`, met: result.intonation >= 55 },
+              { label: `尺 70以上（現在 ${result.duration}）`, met: result.duration >= 70 },
+              { label: `詠唱安定度 70以上（現在 ${result.clarity}）`, met: result.clarity >= 70 },
+              { label: `声量 70以上（現在 ${result.volume}）`, met: result.volume >= 70 },
+            ],
+          },
+          A: {
+            label: "S昇格条件", color: "#ff6a00",
+            items: [
+              { label: `総合スコア 90以上（現在 ${result.score}）`, met: result.score >= 90 },
+              { label: `抑揚 65以上（現在 ${result.intonation}）`, met: result.intonation >= 65 },
+              { label: `尺 80以上（現在 ${result.duration}）`, met: result.duration >= 80 },
+              { label: `詠唱安定度 80以上（現在 ${result.clarity}）`, met: result.clarity >= 80 },
+              { label: `声量 80以上（現在 ${result.volume}）`, met: result.volume >= 80 },
+              { label: "詠唱完了ボタンで終了", met: result.userCompleted },
+            ],
+          },
+          S: {
+            label: "SS昇格条件", color: "#ffcc00",
+            items: [
+              { label: `総合スコア 93以上（現在 ${result.score}）`, met: result.score >= 93 },
+              { label: `抑揚 80以上（現在 ${result.intonation}）`, met: result.intonation >= 80 },
+              { label: `尺 85以上（現在 ${result.duration}）`, met: result.duration >= 85 },
+              { label: `詠唱安定度 85以上（現在 ${result.clarity}）`, met: result.clarity >= 85 },
+              { label: `声量 90以上（現在 ${result.volume}）`, met: result.volume >= 90 },
+              { label: "詠唱完了ボタンで終了", met: result.userCompleted },
+            ],
+          },
+          SS: {
+            label: "EX昇格条件", color: "#d4a017",
+            items: [
+              { label: `総合スコア 96以上（現在 ${result.score}）`, met: result.score >= 96 },
+              { label: `抑揚 88以上（現在 ${result.intonation}）`, met: result.intonation >= 88 },
+              { label: `尺 90以上（現在 ${result.duration}）`, met: result.duration >= 90 },
+              { label: `詠唱安定度 88以上（現在 ${result.clarity}）`, met: result.clarity >= 88 },
+              { label: `声量 100（現在 ${result.volume}）`, met: result.volume >= 100 },
+              { label: "詠唱完了ボタンで終了", met: result.userCompleted },
+            ],
+          },
+        };
+        const cfg = nextRankConfig[result.rank];
+        if (!cfg) return null;
+        return (
+          <div className="w-full rounded-xl p-4 space-y-2" style={{ border: `1px solid ${cfg.color}44`, background: "#1a002266" }}>
+            <p className="text-xs font-bold tracking-widest text-center mb-3" style={{ color: cfg.color }}>
+              ── {cfg.label} ──
+            </p>
+            {cfg.items.map(({ label, met }) => (
+              <div key={label} className="flex items-center gap-2 text-xs">
+                <span style={{ color: met ? "#22c55e" : "#ef4444", fontSize: "1rem" }}>{met ? "✓" : "✗"}</span>
+                <span style={{ color: met ? "#86efac" : "#fca5a5" }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* ボタン */}
       <div className="flex flex-col gap-3 w-full mt-2">
@@ -798,10 +796,11 @@ async function drawResultCanvas(
   ctx.fillRect(0, 0, w, h);
 
   // 魔法陣背景（ランダムで紫・赤）
-  const circleImg = new Image();
-  circleImg.src = Math.random() > 0.5 ? "/circle-purple.png" : "/circle-red.png";
   await new Promise<void>((resolve) => {
+    const circleImg = new Image();
+    const timeout = setTimeout(resolve, 3000); // タイムアウト保険
     circleImg.onload = () => {
+      clearTimeout(timeout);
       ctx.save();
       ctx.globalAlpha = 0.22;
       const size = 460;
@@ -809,7 +808,8 @@ async function drawResultCanvas(
       ctx.restore();
       resolve();
     };
-    circleImg.onerror = () => resolve();
+    circleImg.onerror = () => { clearTimeout(timeout); resolve(); };
+    circleImg.src = Math.random() > 0.5 ? "/circle-purple.png" : "/circle-red.png"; // ハンドラ設定後にsrcをセット
   });
 
   ctx.strokeStyle = "#6b21a844";
