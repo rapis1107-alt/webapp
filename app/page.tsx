@@ -564,7 +564,7 @@ function ResultScreen({
 
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://webapp-6bdo.vercel.app";
   const buildResultUrl = () =>
-    `${siteUrl}/result?r=${result.rank}&s=${result.score}&v=${result.volume}&i=${result.intonation}&c=${result.clarity}&so=${result.soul}&ch=${result.chuni}`;
+    `${siteUrl}/result?r=${result.rank}&s=${result.score}&t=${encodeURIComponent(result.title)}&v=${result.volume}&i=${result.intonation}&c=${result.clarity}&so=${result.soul}&ch=${result.chuni}`;
   const buildShareText = () => {
     const taunt = pickTaunt(lastTauntRef.current);
     lastTauntRef.current = taunt;
