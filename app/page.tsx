@@ -663,28 +663,28 @@ function ResultScreen({
           E: {
             label: "D昇格条件", color: "#66ccaa",
             items: [
-              { label: `総合スコア 35以上（現在 ${result.score}）`, met: result.score >= 35 },
+              { label: `総合スコア 22以上（現在 ${result.score}）`, met: result.score >= 22 },
               { label: `声量 40以上（現在 ${result.volume}）`, met: result.volume >= 40 },
             ],
           },
           D: {
             label: "C昇格条件", color: "#6b21a8",
             items: [
-              { label: `総合スコア 52以上（現在 ${result.score}）`, met: result.score >= 52 },
+              { label: `総合スコア 35以上（現在 ${result.score}）`, met: result.score >= 35 },
               { label: `声量 50以上（現在 ${result.volume}）`, met: result.volume >= 50 },
             ],
           },
           C: {
             label: "B昇格条件", color: "#9333ea",
             items: [
-              { label: `総合スコア 68以上（現在 ${result.score}）`, met: result.score >= 68 },
+              { label: `総合スコア 50以上（現在 ${result.score}）`, met: result.score >= 50 },
               { label: `声量 60以上（現在 ${result.volume}）`, met: result.volume >= 60 },
             ],
           },
           B: {
             label: "A昇格条件", color: "#cc1a1a",
             items: [
-              { label: `総合スコア 82以上（現在 ${result.score}）`, met: result.score >= 82 },
+              { label: `総合スコア 68以上（現在 ${result.score}）`, met: result.score >= 68 },
               { label: `抑揚 55以上（現在 ${result.intonation}）`, met: result.intonation >= 55 },
               { label: `尺 70以上（現在 ${result.duration}）`, met: result.duration >= 70 },
               { label: `詠唱安定度 70以上（現在 ${result.clarity}）`, met: result.clarity >= 70 },
@@ -694,7 +694,7 @@ function ResultScreen({
           A: {
             label: "S昇格条件", color: "#ff6a00",
             items: [
-              { label: `総合スコア 90以上（現在 ${result.score}）`, met: result.score >= 90 },
+              { label: `総合スコア 78以上（現在 ${result.score}）`, met: result.score >= 78 },
               { label: `抑揚 65以上（現在 ${result.intonation}）`, met: result.intonation >= 65 },
               { label: `尺 80以上（現在 ${result.duration}）`, met: result.duration >= 80 },
               { label: `詠唱安定度 80以上（現在 ${result.clarity}）`, met: result.clarity >= 80 },
@@ -705,7 +705,7 @@ function ResultScreen({
           S: {
             label: "SS昇格条件", color: "#ffcc00",
             items: [
-              { label: `総合スコア 93以上（現在 ${result.score}）`, met: result.score >= 93 },
+              { label: `総合スコア 86以上（現在 ${result.score}）`, met: result.score >= 86 },
               { label: `抑揚 80以上（現在 ${result.intonation}）`, met: result.intonation >= 80 },
               { label: `尺 85以上（現在 ${result.duration}）`, met: result.duration >= 85 },
               { label: `詠唱安定度 85以上（現在 ${result.clarity}）`, met: result.clarity >= 85 },
@@ -716,7 +716,7 @@ function ResultScreen({
           SS: {
             label: "EX昇格条件", color: "#d4a017",
             items: [
-              { label: `総合スコア 96以上（現在 ${result.score}）`, met: result.score >= 96 },
+              { label: `総合スコア 93以上（現在 ${result.score}）`, met: result.score >= 93 },
               { label: `抑揚 88以上（現在 ${result.intonation}）`, met: result.intonation >= 88 },
               { label: `尺 90以上（現在 ${result.duration}）`, met: result.duration >= 90 },
               { label: `詠唱安定度 88以上（現在 ${result.clarity}）`, met: result.clarity >= 88 },

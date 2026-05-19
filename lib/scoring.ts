@@ -93,13 +93,13 @@ function getRank(
   userCompleted: boolean,
 ): keyof typeof titles {
   let rank: keyof typeof titles;
-  if      (score >= 96) rank = "EX";
-  else if (score >= 93) rank = "SS";
-  else if (score >= 90) rank = "S";
-  else if (score >= 82) rank = "A";
-  else if (score >= 68) rank = "B";
-  else if (score >= 52) rank = "C";
-  else if (score >= 35) rank = "D";
+  if      (score >= 93) rank = "EX";
+  else if (score >= 86) rank = "SS";
+  else if (score >= 78) rank = "S";
+  else if (score >= 68) rank = "A";
+  else if (score >= 50) rank = "B";
+  else if (score >= 35) rank = "C";
+  else if (score >= 22) rank = "D";
   else                  rank = "E";
 
   // 共通EX条件
@@ -181,16 +181,16 @@ function calculateScores(metrics: AudioMetrics) {
     soul       * 0.14;
 
   // 尺達成率によるキャップ
-  if (achievementRatio < 0.40) score = Math.min(score, 34); // 上限E
-  if (achievementRatio < 0.60) score = Math.min(score, 51); // 上限D
-  if (achievementRatio < 0.75) score = Math.min(score, 67); // 上限C
-  if (achievementRatio < 0.90) score = Math.min(score, 81); // 上限B
+  if (achievementRatio < 0.40) score = Math.min(score, 21); // 上限E
+  if (achievementRatio < 0.60) score = Math.min(score, 34); // 上限D
+  if (achievementRatio < 0.75) score = Math.min(score, 49); // 上限C
+  if (achievementRatio < 0.90) score = Math.min(score, 67); // 上限B
 
   // 声量・抑揚不足によるキャップ
-  if (volume     < 30) score = Math.min(score, 34); // 上限E
-  if (volume     < 40) score = Math.min(score, 51); // 上限D
-  if (intonation < 40) score = Math.min(score, 81); // 上限B（棒読み対策）
-  if (intonation < 55) score = Math.min(score, 89); // 上限A
+  if (volume     < 30) score = Math.min(score, 21); // 上限E
+  if (volume     < 40) score = Math.min(score, 34); // 上限D
+  if (intonation < 40) score = Math.min(score, 67); // 上限B（棒読み対策）
+  if (intonation < 55) score = Math.min(score, 77); // 上限A
 
   score = clamp(score, 0, 100);
 
