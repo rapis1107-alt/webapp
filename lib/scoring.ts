@@ -180,11 +180,12 @@ function calculateScores(metrics: AudioMetrics) {
     clarity    * 0.22 +
     soul       * 0.14;
 
-  // 尺達成率によるキャップ
-  if (achievementRatio < 0.40) score = Math.min(score, 21); // 上限E
-  if (achievementRatio < 0.60) score = Math.min(score, 34); // 上限D
-  if (achievementRatio < 0.75) score = Math.min(score, 49); // 上限C
-  if (achievementRatio < 0.90) score = Math.min(score, 67); // 上限B
+  // 尺達成率によるキャップ（60%超えで完了ボタン押下の場合は全キャップ免除）
+  const completedEarly = metrics.userCompleted && metrics.duration / metrics.expectedSeconds > 0.60;
+  if (!completedEarly && achievementRatio < 0.40) score = Math.min(score, 21); // 上限E
+  if (!completedEarly && achievementRatio < 0.60) score = Math.min(score, 34); // 上限D
+  if (!completedEarly && achievementRatio < 0.75) score = Math.min(score, 49); // 上限C
+  if (!completedEarly && achievementRatio < 0.90) score = Math.min(score, 67); // 上限B
 
   // 声量・抑揚不足によるキャップ
   if (volume     < 30) score = Math.min(score, 21); // 上限E
