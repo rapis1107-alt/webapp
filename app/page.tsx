@@ -38,13 +38,14 @@ export default function Home() {
   const [result, setResult] = useState<ScoreResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioCtxRef      = useRef<AudioContext | null>(null);
-  const recordTimerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startTimeRef     = useRef<number>(0);
-  const volumeSamplesRef = useRef<number[]>([]);
-  const pitchSamplesRef  = useRef<number[]>([]);
-  const lastChantIdRef   = useRef<string | undefined>(undefined);
+  const mediaRecorderRef  = useRef<MediaRecorder | null>(null);
+  const audioCtxRef       = useRef<AudioContext | null>(null);
+  const recordTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startTimeRef      = useRef<number>(0);
+  const volumeSamplesRef  = useRef<number[]>([]);
+  const pitchSamplesRef   = useRef<number[]>([]);
+  const lastChantIdRef    = useRef<string | undefined>(undefined);
+  const userCompletedRef  = useRef<boolean>(false);
 
   const stopRecording = (userCompleted = false) => {
     if (recordTimerRef.current) {
@@ -111,8 +112,9 @@ export default function Home() {
   };
 
   const startRecording = async (c: Chant, recordMax = c.expectedSeconds * 1000 + RECORD_BUFFER_MS) => {
-    volumeSamplesRef.current = [];
-    pitchSamplesRef.current  = [];
+    volumeSamplesRef.current  = [];
+    pitchSamplesRef.current   = [];
+    userCompletedRef.current  = false;
 
     let stream: MediaStream;
     try {
@@ -160,7 +162,7 @@ export default function Home() {
         }
         pitchSamplesRef.current.push(count > 0 ? sum / count : 0);
 
-        if (elapsed >= recordMax) stopRecording(false);
+        if (elapsed >= recordMax) stopRecording(userCompletedRef.current);
       }, 100);
     } catch {
       stream.getTracks().forEach((t) => t.stop());
@@ -246,7 +248,7 @@ export default function Home() {
         )}
         {screen === "countdown" && chant && <CountdownScreen chant={chant} count={countdown} />}
         {screen === "recording" && chant && (
-          <RecordingScreen chant={chant} elapsed={recordMs} recordMax={chant.expectedSeconds * 1000 + RECORD_BUFFER_MS} onStop={() => stopRecording(true)} />
+          <RecordingScreen chant={chant} elapsed={recordMs} recordMax={chant.expectedSeconds * 1000 + RECORD_BUFFER_MS} onStop={() => { userCompletedRef.current = true; stopRecording(true); }} />
         )}
         {screen === "analyzing" && <AnalyzingScreen />}
         {screen === "result" && result && chant && (
