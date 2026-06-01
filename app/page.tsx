@@ -644,6 +644,13 @@ function ResultScreen({
         「{result.comment}」
       </p>
 
+      {/* タイムアウト警告 */}
+      {result.timeoutWarning && (
+        <div className="w-full text-center text-sm text-yellow-400 opacity-80 py-1">
+          ⚠ 完了ボタンを押下してください。
+        </div>
+      )}
+
       {/* スコアバー */}
       <div className="w-full space-y-3 py-1">
         <ScoreBar label="声量"   value={result.volume}     color="#6b21a8" comment={result.volumeComment} />

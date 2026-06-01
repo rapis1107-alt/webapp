@@ -35,6 +35,7 @@ export interface ScoreResult {
   achievementRatio: number;
   userCompleted: boolean;
   difficulty: Difficulty;
+  timeoutWarning: boolean;
 }
 
 function normalize(value: number, min: number, max: number) {
@@ -129,13 +130,15 @@ function calculateScores(metrics: AudioMetrics) {
   // 実発話時間（無音除く）で尺を評価
   const actualSpeakingTime = metrics.duration * (1 - metrics.silenceRatio);
 
-  // 完了ボタンで終了 かつ 期待時間の半分以上使った場合は、
-  // 実録音時間を基準にして尺を評価（早押しで損しない）
-  const effectiveExpected =
-    metrics.userCompleted && metrics.duration >= metrics.expectedSeconds * 0.5
-      ? metrics.duration
-      : metrics.expectedSeconds;
+  // 尺達成判定
+  // 完了ボタン + 61%以上 → 達成（実録音時間基準で評価）
+  // 完了ボタン + 60%未満 → 未達（期待秒数基準で評価）
+  // タイムアウト          → 軽いペナルティ（期待秒数基準で評価）
+  const completionRatio = metrics.duration / metrics.expectedSeconds;
+  const completedOnTime = metrics.userCompleted && completionRatio >= 0.61;
+  const timedOut = !metrics.userCompleted;
 
+  const effectiveExpected = completedOnTime ? metrics.duration : metrics.expectedSeconds;
   const achievementRatio = actualSpeakingTime / effectiveExpected;
 
   let volume     = scoreVolume(metrics.avgVolume);
@@ -180,7 +183,8 @@ function calculateScores(metrics: AudioMetrics) {
     clarity    * 0.22 +
     soul       * 0.14;
 
-  // 尺達成率キャップ廃止：尺スコア自体が低ければ総合スコアも自然に下がる
+  // タイムアウト時のペナルティ
+  if (timedOut) score = score * 0.88;
 
   // 声量・抑揚不足によるキャップ
   if (volume     < 30) score = Math.min(score, 21); // 上限E
@@ -206,6 +210,7 @@ function calculateScores(metrics: AudioMetrics) {
     achievementRatio,
     userCompleted: metrics.userCompleted,
     difficulty: metrics.difficulty,
+    timeoutWarning: timedOut,
   };
 }
 
