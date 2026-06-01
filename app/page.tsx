@@ -646,7 +646,7 @@ function ResultScreen({
 
       {/* タイムアウト警告 */}
       {result.timeoutWarning && (
-        <div className="w-full text-center text-sm text-yellow-400 opacity-80 py-1">
+        <div className="w-full text-center text-sm text-yellow-400 opacity-90 py-1">
           ⚠ 完了ボタンを押下してください。
         </div>
       )}
@@ -689,7 +689,6 @@ function ResultScreen({
             items: [
               { label: `総合スコア 68以上（現在 ${result.score}）`, met: result.score >= 68 },
               { label: `抑揚 55以上（現在 ${result.intonation}）`, met: result.intonation >= 55 },
-              { label: `尺 70以上（現在 ${result.duration}）`, met: result.duration >= 70 },
               { label: `詠唱安定度 70以上（現在 ${result.clarity}）`, met: result.clarity >= 70 },
               { label: `声量 70以上（現在 ${result.volume}）`, met: result.volume >= 70 },
             ],
@@ -699,7 +698,6 @@ function ResultScreen({
             items: [
               { label: `総合スコア 78以上（現在 ${result.score}）`, met: result.score >= 78 },
               { label: `抑揚 65以上（現在 ${result.intonation}）`, met: result.intonation >= 65 },
-              { label: `尺 80以上（現在 ${result.duration}）`, met: result.duration >= 80 },
               { label: `詠唱安定度 80以上（現在 ${result.clarity}）`, met: result.clarity >= 80 },
               { label: `声量 80以上（現在 ${result.volume}）`, met: result.volume >= 80 },
               { label: "詠唱完了ボタンで終了", met: result.userCompleted },
@@ -710,7 +708,6 @@ function ResultScreen({
             items: [
               { label: `総合スコア 86以上（現在 ${result.score}）`, met: result.score >= 86 },
               { label: `抑揚 80以上（現在 ${result.intonation}）`, met: result.intonation >= 80 },
-              { label: `尺 85以上（現在 ${result.duration}）`, met: result.duration >= 85 },
               { label: `詠唱安定度 85以上（現在 ${result.clarity}）`, met: result.clarity >= 85 },
               { label: `声量 90以上（現在 ${result.volume}）`, met: result.volume >= 90 },
               { label: "詠唱完了ボタンで終了", met: result.userCompleted },
@@ -721,7 +718,6 @@ function ResultScreen({
             items: [
               { label: `総合スコア 93以上（現在 ${result.score}）`, met: result.score >= 93 },
               { label: `抑揚 88以上（現在 ${result.intonation}）`, met: result.intonation >= 88 },
-              { label: `尺 90以上（現在 ${result.duration}）`, met: result.duration >= 90 },
               { label: `詠唱安定度 88以上（現在 ${result.clarity}）`, met: result.clarity >= 88 },
               { label: `声量 100（現在 ${result.volume}）`, met: result.volume >= 100 },
               { label: "詠唱完了ボタンで終了", met: result.userCompleted },
