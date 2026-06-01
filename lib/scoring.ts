@@ -131,21 +131,23 @@ function calculateScores(metrics: AudioMetrics) {
   const actualSpeakingTime = metrics.duration * (1 - metrics.silenceRatio);
 
   // 尺達成判定
-  // 完了ボタン + 61%以上 → 達成（実録音時間基準で評価）
-  // 完了ボタン + 60%未満 → 未達（期待秒数基準で評価）
-  // タイムアウト          → 軽いペナルティ（期待秒数基準で評価）
+  // 完了ボタン + 61%以上 → 達成（ボタン押下タイミングのみで評価）
+  // 完了ボタン + 60%未満 → 未達（ボタン押下タイミングで評価→自然に低スコア）
+  // タイムアウト          → 軽いペナルティ（発話時間で評価）
   const completionRatio = metrics.duration / metrics.expectedSeconds;
   const completedOnTime = metrics.userCompleted && completionRatio >= 0.61;
   const timedOut = !metrics.userCompleted;
 
-  const effectiveExpected = completedOnTime ? metrics.duration : metrics.expectedSeconds;
-  const achievementRatio = actualSpeakingTime / effectiveExpected;
+  // completedOnTime: ボタン押下時点のdurationで尺評価（無音無視）
+  // timeout: 発話時間で評価
+  const durationForScore = metrics.userCompleted ? metrics.duration : actualSpeakingTime;
+  const achievementRatio = durationForScore / metrics.expectedSeconds;
 
   let volume     = scoreVolume(metrics.avgVolume);
   let intonation = normalize(metrics.volumeVariance, 0.02, 0.12);
   // 声量が低い場合は抑揚補正（ノイズを抑揚として拾わないように）
   if (metrics.avgVolume < 0.02) intonation *= 0.4;
-  let duration   = scoreDuration(actualSpeakingTime, effectiveExpected);
+  let duration   = scoreDuration(durationForScore, metrics.expectedSeconds);
   const speakingRatio = 1 - metrics.silenceRatio;
 
   // 詠唱安定度：発話の滑らかさを測る。速さ・声量は評価しない
