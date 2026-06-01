@@ -103,7 +103,7 @@ export default function Home() {
         avgVolume, maxVolume,
         volumeVariance, silenceRatio,
         longSilenceCount, veryLongSilenceCount,
-        difficulty, userCompleted,
+        difficulty, userCompleted: userCompletedRef.current,
       });
       setResult(score);
       setScreen("result");
