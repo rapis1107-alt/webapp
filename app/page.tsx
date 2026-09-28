@@ -446,11 +446,9 @@ function RecordingScreen({ chant, elapsed, recordMax, onStop }: { chant: Chant; 
           style={{ width: `${pct}%`, background: "linear-gradient(90deg, #6b21a8, #cc1a1a)" }}
         />
       </div>
-      {chantDone && (
-        <p className="text-sm font-bold tracking-widest flicker" style={{ color: "#cc1a1a", textShadow: "0 0 12px #cc1a1a99" }}>
-          ↓ 詠唱完了ボタンを押せ！
-        </p>
-      )}
+      <p className="text-sm font-bold tracking-widest flicker" style={{ color: chantDone ? "#cc1a1a" : "#cc1a1a88", textShadow: chantDone ? "0 0 12px #cc1a1a99" : "none" }}>
+        ↓ 詠唱完了ボタンを押せ！
+      </p>
       <button
         onClick={onStop}
         className="px-8 py-3 rounded-full text-sm font-bold tracking-widest cursor-pointer transition-all"
