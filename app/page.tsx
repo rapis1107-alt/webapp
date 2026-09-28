@@ -426,6 +426,7 @@ function CountdownScreen({ chant, count }: { chant: Chant; count: number }) {
 function RecordingScreen({ chant, elapsed, recordMax, onStop }: { chant: Chant; elapsed: number; recordMax: number; onStop: () => void }) {
   const pct       = Math.min(100, (elapsed / recordMax) * 100);
   const remaining = Math.max(0, Math.ceil((recordMax - elapsed) / 1000));
+  const chantDone = elapsed >= chant.expectedSeconds * 1000;
 
   return (
     <div className="flex flex-col items-center gap-6 text-center z-10 max-w-sm w-full">
@@ -445,10 +446,20 @@ function RecordingScreen({ chant, elapsed, recordMax, onStop }: { chant: Chant; 
           style={{ width: `${pct}%`, background: "linear-gradient(90deg, #6b21a8, #cc1a1a)" }}
         />
       </div>
+      {chantDone && (
+        <p className="text-sm font-bold tracking-widest flicker" style={{ color: "#cc1a1a", textShadow: "0 0 12px #cc1a1a99" }}>
+          ↓ 詠唱完了ボタンを押せ！
+        </p>
+      )}
       <button
         onClick={onStop}
-        className="px-8 py-3 rounded-full text-sm font-bold tracking-widest cursor-pointer transition-all mt-2"
-        style={{ border: "1px solid #cc1a1a88", color: "#cc1a1a" }}
+        className="px-8 py-3 rounded-full text-sm font-bold tracking-widest cursor-pointer transition-all"
+        style={{
+          border: chantDone ? "1px solid #cc1a1a" : "1px solid #cc1a1a88",
+          color: chantDone ? "#fff" : "#cc1a1a",
+          background: chantDone ? "linear-gradient(135deg, #6b21a8, #cc1a1a)" : "transparent",
+          boxShadow: chantDone ? "0 0 16px #cc1a1a66" : "none",
+        }}
       >
         詠唱完了
       </button>
